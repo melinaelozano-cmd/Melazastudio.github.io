@@ -1,0 +1,2086 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Melaza Studio — Proyecto</title>
+
+  <!-- Tipografías oficiales -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700&family=Libre+Baskerville:wght@700&family=Questrial&family=Inter:ital,wght@0,400;0,600;0,700;1,400;1,700&family=Bricolage+Grotesque:wght@600;700&family=Chivo+Mono:wght@500;700&family=Kalnia:ital,wght@0,400;0,600;0,700;1,400;1,600;1,700&display=swap" rel="stylesheet">
+
+  <!-- Matter.js: física del contenedor final (misma que la Home) -->
+
+  <style>
+    /* ==========================================================================
+       1. VARIABLES & RESET
+       La página arranca en rojo (color al que llega la expansión del home) y
+       enseguida se encoge hasta la forma roja sobre fondo blanco.
+       ========================================================================== */
+    :root {
+      --primary: #600F08;           /* Rojo Melaza (bordó del PDF) */
+      --primary-hover: #7D150B;
+      --primary-deep: #3F0A05;      /* Bordó más oscuro (esferas) */
+      --paper: #FAFAFA;             /* Papel Tinta */
+      --ink: #111111;
+      --sel: #E8786D;               /* Rojo clarito: trabajo seleccionado */
+      --sel-hover: #F08F85;
+      --ui: var(--primary);         /* color de logo, menú, cruz y barra (cambia sobre rojo) */
+      --ui-inv: var(--paper);       /* color que contrasta con --ui (texto de las etiquetas del índice) */
+      --font-title: 'Kalnia', Georgia, serif;
+      --font-body: 'Inter', system-ui, -apple-system, sans-serif;
+
+      --pad: 6vw;                   /* margen lateral de cada panel */
+      --header-h: 80px;
+      --hero-d: min(60vh, 44vw);    /* diámetro del círculo principal */
+      --bw: 4px;                    /* grosor del borde rojo: igual en todos los círculos */
+      --band-left: 10vw;            /* donde empieza la banda roja (lado izquierdo, parte redondeada) */
+      --hr: min(38vh, 40.5vw);      /* radio de la parte redondeada de la banda */
+      --gl: min(36vh, 44vw);        /* imagen grande de la galería */
+      --gm: calc(var(--gl) * 0.6);  /* imagen chica de la galería */
+      --gg: min(3vh, 4vw);          /* separación de la grilla */
+      --ec: var(--hero-d);          /* mismo diámetro que la imagen inicial */
+      --glimpse: 14vw;              /* cuánto de la galería se asoma a la izquierda del final */
+      --ps: min(24vh, 20vw);        /* diámetro de las imágenes de cada etapa */
+      --us: min(54vh, 70vw);        /* lado del recuadro UI Kit */
+    }
+    body.on-red { --ui: var(--paper); --ui-inv: var(--primary); }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    html { background: var(--primary); }
+    html.ready { background: var(--paper) url("assets/papel.jpg") center / cover fixed; }   /* textura de papel: solo donde el fondo es blanco */
+
+    html, body {
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+      color: var(--paper);
+      font-family: var(--font-body);
+    }
+    body { background: transparent; transition: opacity 0.35s ease; }
+    body.is-leaving { opacity: 0; }
+
+    /* ==========================================================================
+       2. NAVEGACIÓN + CRUZ DE CIERRE (fija arriba a la derecha)
+       ========================================================================== */
+    header {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: var(--header-h);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 0 5vw;
+      z-index: 30;
+    }
+
+    header .logo {
+      font-family: var(--font-title);
+      font-size: 1.4rem;
+      font-weight: 700;
+      letter-spacing: -0.02em;
+      color: var(--ui);
+      text-decoration: none;
+      transition: color 0.4s ease;
+    }
+
+    /* Logo + subtítulo: toman --ui, así cambian de color sobre rojo / blanco */
+    header .brand { display: flex; flex-direction: column; text-decoration: none; }
+    header .tagline { font-size: 0.78rem; letter-spacing: 0.06em; color: var(--ui); opacity: 0.8; margin-top: 2px; transition: color 0.4s ease; }
+
+    nav ul { display: flex; gap: 2.5rem; list-style: none; }
+    nav a {
+      font-size: 0.9rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: var(--ui);
+      text-decoration: none;
+      transition: opacity 0.3s ease, color 0.4s ease;
+    }
+    nav a:hover { opacity: 0.6; }
+
+    /* Índice de proyectos: centrado arriba; el proyecto actual se abre con su nombre */
+    .idx {
+      position: absolute;
+      left: 50%;
+      top: 50%;
+      transform: translate(-50%, -50%);
+      display: flex;
+      align-items: center;
+      gap: 0.35rem;
+      list-style: none;
+      max-width: 52vw;
+    }
+    .idx a {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      padding: 0.4rem 0.55rem;
+      border-radius: 999px;
+      font-size: 0.78rem;
+      font-weight: 400;
+      letter-spacing: 0.04em;
+      text-transform: none;
+      color: var(--ui);
+      opacity: 0.55;
+      white-space: nowrap;
+      transition: opacity 0.3s ease, background 0.4s ease, color 0.4s ease;
+    }
+    .idx a { position: relative; }
+    .idx a:hover { opacity: 1; }
+    /* Al pasar el mouse por un número no seleccionado, el nombre del proyecto aparece abajo */
+    @media (hover: hover) {
+      .idx a:not(.on)::after {
+        content: attr(data-name);
+        position: absolute;
+        top: calc(100% + 6px);
+        left: 50%;
+        transform: translate(-50%, -4px);
+        padding: 0.3rem 0.75rem;
+        border-radius: 999px;
+        background: var(--ui);
+        color: var(--ui-inv);
+        font-family: var(--font-title);
+        font-style: italic;
+        font-size: 0.78rem;
+        letter-spacing: 0.02em;
+        white-space: nowrap;
+        opacity: 0;
+        pointer-events: none;
+        transition: opacity 0.25s ease, transform 0.3s cubic-bezier(0.2, 0.8, 0.2, 1), background 0.4s ease, color 0.4s ease;
+      }
+      .idx a:not(.on):hover::after, .idx a:not(.on):focus-visible::after { opacity: 1; transform: translate(-50%, 0); }
+    }
+    .idx a span {
+      font-family: var(--font-title);
+      font-style: italic;
+      max-width: 0;
+      overflow: hidden;
+      transition: max-width 0.55s cubic-bezier(0.2, 0.8, 0.2, 1);
+    }
+    .idx a.on { opacity: 1; background: color-mix(in srgb, var(--ui) 16%, transparent); padding-right: 0.9rem; }
+    .idx a.on span { max-width: 18ch; }
+
+    /* Cruz: al final del menú, vuelve a la Home */
+    nav li { display: flex; align-items: center; }
+    .close {
+      position: relative;
+      width: 24px;
+      height: 24px;
+      color: var(--ui);
+      display: grid;
+      place-items: center;
+      text-decoration: none;
+      transition: color 0.4s ease;
+    }
+    .close::after { content: ""; position: absolute; inset: -12px; }   /* zona de toque más grande */
+    /* Círculo envolvente: aparece alrededor de la cruz al pasar el mouse */
+    .close::before {
+      content: "";
+      position: absolute;
+      inset: -9px;
+      border-radius: 50%;
+      background: color-mix(in srgb, var(--ui) 20%, transparent);
+      opacity: 0;
+      transform: scale(0.6);
+      transition: opacity 0.25s ease, transform 0.3s cubic-bezier(0.2, 0.8, 0.2, 1), background 0.4s ease;
+    }
+    .close:hover::before, .close:focus-visible::before { opacity: 1; transform: scale(1); }
+    .close svg { width: 22px; height: 22px; }
+
+    /* ==========================================================================
+       3. FORMA ROJA (inspirada en la banda del PDF A4)
+       Banda que nace en el borde izquierdo y termina en medio círculo a la
+       derecha. Con el scroll se extiende hasta tocar los bordes y cubre todo.
+       ========================================================================== */
+    #red-shape {
+      position: fixed;
+      left: 0;
+      top: 0;
+      width: 100vw;
+      height: 100vh;
+      background: var(--primary);
+      z-index: 1;
+      pointer-events: none;
+    }
+    #red-shape-b {
+      position: fixed;
+      left: 0;
+      top: 0;
+      background: var(--primary);
+      z-index: 1;
+      pointer-events: none;
+      display: none;
+    }
+    #red-shape.settling {
+      transition: top 1.1s cubic-bezier(0.7, 0, 0.2, 1),
+                  height 1.1s cubic-bezier(0.7, 0, 0.2, 1),
+                  width 1.1s cubic-bezier(0.7, 0, 0.2, 1),
+                  left 1.1s cubic-bezier(0.7, 0, 0.2, 1),
+                  border-radius 1.1s cubic-bezier(0.7, 0, 0.2, 1);
+    }
+
+    /* ==========================================================================
+       4. SCROLL HORIZONTAL
+       ========================================================================== */
+    #scroller {
+      position: fixed;
+      inset: 0;
+      z-index: 2;
+      overflow-x: auto;
+      overflow-y: hidden;
+      scrollbar-width: none;
+      overscroll-behavior: contain;
+      outline: none;
+    }
+    #scroller::-webkit-scrollbar { display: none; }
+
+    .track {
+      display: flex;
+      height: 100%;
+      width: max-content;
+      padding-top: var(--header-h);
+    }
+
+    .panel {
+      flex: none;
+      height: 100%;
+      display: flex;
+      align-items: center;
+      gap: 6vw;
+      padding: 0 var(--pad) 36px;
+      position: relative;
+    }
+
+    /* Barra de progreso del scroll */
+    #progress {
+      position: fixed;
+      left: 5vw;
+      right: 5vw;
+      bottom: 22px;
+      height: 2px;
+      background: color-mix(in srgb, var(--ui) 22%, transparent);
+      z-index: 20;
+      opacity: 0;
+      transition: background 0.4s ease, opacity 0.5s ease;
+    }
+    body.show-progress #progress { opacity: 1; pointer-events: auto; }
+    /* Zona de clic más alta que la línea; al pasar el mouse la barra engrosa y aparece el tirador */
+    #progress { cursor: pointer; pointer-events: none; touch-action: none; transition: background 0.4s ease, opacity 0.5s ease, height 0.2s ease, bottom 0.2s ease; }
+    #progress::before { content: ""; position: absolute; left: 0; right: 0; top: -14px; bottom: -14px; }
+    #progress::after {
+      content: "";
+      position: absolute;
+      top: 50%;
+      left: var(--pos, 0%);
+      width: 12px;
+      height: 12px;
+      border-radius: 50%;
+      background: var(--ui);
+      transform: translate(-50%, -50%) scale(0);
+      transition: transform 0.2s ease, background 0.4s ease;
+    }
+    @media (hover: hover) {
+      #progress:hover, #progress.drag { height: 6px; bottom: 20px; border-radius: 3px; }
+      #progress:hover::after, #progress.drag::after { transform: translate(-50%, -50%) scale(1); }
+    }
+    #progress i {
+      display: block;
+      height: 100%;
+      background: var(--ui);
+      transform-origin: left center;
+      transform: scaleX(0);
+    }
+
+    /* Indicación de scroll */
+    #scroll-hint {
+      position: fixed;
+      left: 50%;
+      bottom: 34px;
+      transform: translateX(-50%);
+      z-index: 25;
+      display: flex;
+      align-items: center;
+      gap: 0.8rem;
+      font-family: var(--font-body);
+      font-size: 0.85rem;
+      color: var(--ui);
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.6s ease, color 0.4s ease;
+    }
+    html.ready #scroll-hint { opacity: 0.9; transition-delay: 1.8s, 0s; }
+    #scroll-hint.gone, html.ready #scroll-hint.gone { opacity: 0; transition-delay: 0s; }
+    #scroll-hint i {
+      position: relative;
+      width: 44px;
+      height: 1.5px;
+      background: currentColor;
+      animation: nudge 1.6s ease-in-out infinite;
+    }
+    #scroll-hint i::after {
+      content: "";
+      position: absolute;
+      right: 0;
+      top: -3.5px;
+      width: 8px;
+      height: 8px;
+      border-top: 1.5px solid currentColor;
+      border-right: 1.5px solid currentColor;
+      transform: rotate(45deg);
+      transform-origin: center;
+    }
+    @keyframes nudge { 0%, 100% { transform: translateX(0); } 50% { transform: translateX(10px); } }
+
+    /* Indicador "+" (círculo que pulsa y gira al pasar el mouse): lo llevan todos los elementos que revelan más información con el hover.
+       .hp.lt es la versión clara, para fondos rojos u oscuros. El contenedor lleva la clase .hv. */
+    .hp { display: inline-block; position: relative; flex: none; width: 1.25rem; height: 1.25rem; border-radius: 50%; background: var(--hp-bg, var(--primary)); animation: hpPulse 2.6s ease-in-out infinite; transition: transform .5s cubic-bezier(.2,.8,.2,1); }
+    .hp::before, .hp::after { content: ""; position: absolute; left: 50%; top: 50%; width: 46%; height: 1.5px; border-radius: 1px; background: var(--hp-fg, var(--paper)); transform: translate(-50%, -50%); transition: transform .3s; }
+    .hp::after { transform: translate(-50%, -50%) rotate(90deg); }
+    .hp.lt { --hp-bg: rgba(250,250,250,.2); --hp-fg: var(--paper); --hp-ring: rgba(250,250,250,.25); }
+    .hv:focus-visible .hp, .hv.open .hp { transform: rotate(180deg); }
+    .hv:focus-visible .hp::after, .hv.open .hp::after { transform: translate(-50%, -50%) rotate(0); }
+    @media (hover: hover) {
+      .hv:hover .hp { transform: rotate(180deg); }
+      .hv:hover .hp::after { transform: translate(-50%, -50%) rotate(0); }
+    }
+    @keyframes hpPulse { 0%, 100% { box-shadow: 0 0 0 0 var(--hp-ring, rgba(96,15,8,.3)); } 50% { box-shadow: 0 0 0 5px transparent; } }
+    @media (prefers-reduced-motion: reduce) { .hp { animation: none; } }
+
+    /* Aparición de contenidos al entrar en pantalla */
+    .reveal {
+      opacity: 0;
+      transform: translateY(26px);
+      transition: opacity 0.8s ease, transform 0.8s cubic-bezier(0.2, 0.8, 0.2, 1);
+      transition-delay: var(--d, 0s);
+    }
+    .reveal.in { opacity: 1; transform: none; }
+
+    /* ==========================================================================
+       5. CÍRCULO PRINCIPAL (a la izquierda, sale con el scroll)
+       ========================================================================== */
+    .hero-circle {
+      position: fixed;
+      left: calc(var(--band-left) + var(--hr) - var(--hero-d) / 2);   /* concéntrico con la curva */
+      top: 50%;
+      width: var(--hero-d);
+      height: var(--hero-d);
+      margin-top: calc(var(--hero-d) / -2);
+      z-index: 6;
+      pointer-events: none;
+      will-change: transform;
+    }
+
+    /* Disco blanco = lugar de la foto (vacío hasta cargar la imagen) */
+    .hero-circle .disc {
+      width: 100%;
+      height: 100%;
+      border-radius: 50%;
+      background: var(--paper);
+      overflow: hidden;
+      animation: pop 0.95s cubic-bezier(0.2, 0.9, 0.2, 1) 0.6s both;
+    }
+    .hero-circle .disc img { width: 100%; height: 100%; object-fit: cover; display: block; }
+
+    @keyframes pop  { from { transform: scale(0.2); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+    @keyframes fade { from { opacity: 0; } to { opacity: 1; } }
+
+    /* ==========================================================================
+       6. PANELES
+       ========================================================================== */
+    .label {
+      display: block;
+      font-family: var(--font-body);
+      font-size: 0.85rem;
+      font-weight: 400;
+      letter-spacing: 0;
+      color: var(--sel);
+      margin-bottom: 1rem;
+    }
+
+    /* Círculo blanco vacío (placeholder de foto) */
+    .ph {
+      flex: none;
+      width: var(--s);
+      height: var(--s);
+      border-radius: 50%;
+      background: var(--paper);
+      overflow: hidden;
+    }
+    .ph.sq { border-radius: 10px; }
+    .ph img { width: 100%; height: 100%; object-fit: cover; display: block; }
+    .ph:empty, .disc:empty { display: flex; align-items: center; justify-content: center; }
+    .ph:empty::after, .disc:empty::after {
+      content: attr(data-label);
+      font-size: 0.82rem;
+      font-weight: 600;
+      letter-spacing: 0.01em;
+      color: #B5ABA9;
+    }
+
+    /* ---- Panel 1: título (dentro de la forma roja) ---- */
+    .p-hero {
+      --text-left: calc(var(--band-left) + var(--hr) + var(--hero-d) / 2 + 5vw);
+      width: 100vw;
+      padding-left: var(--text-left);
+    }
+    .hero-text {
+      display: flex;
+      flex-direction: column;
+      gap: 1.3rem;
+      max-width: calc(97vw - var(--text-left) - 3vw);
+    }
+    .hero-num {
+      font-family: var(--font-title);
+      font-size: 1rem;
+      letter-spacing: 0.12em;
+      opacity: 0.7;
+    }
+    .hero-logo { line-height: 0; }
+    .hero-title.hero-bask { font-family: 'Libre Baskerville', Georgia, serif; font-style: normal; font-weight: 700; text-transform: uppercase; letter-spacing: .04em; line-height: 1.08; font-size: clamp(2.2rem, 5vw, 4.4rem); }
+    .hero-logo.keep img { filter: none; }   /* logos a color (BeBeMi): no se pintan de blanco */
+    .hero-logo img { filter: brightness(0) invert(1); display: block; height: clamp(64px, 12vh, 120px); width: auto; max-width: 100%; }
+    .hero-title {
+      font-family: var(--font-title);
+      font-style: italic;
+      font-weight: 400;
+      font-size: clamp(2rem, 4.4vw, 4.4rem);
+      line-height: 1.05;
+    }
+    .tag {
+      align-self: flex-start;
+      font-family: var(--font-body);
+      font-size: 0.95rem;
+      font-weight: 400;
+      letter-spacing: 0;
+      color: var(--sel);
+    }
+
+    /* ---- Panel 2: descripción ---- */
+    .p-desc { gap: 8vw; }
+    .p-desc .block { width: min(44vw, 620px); }
+    .lead {
+      font-family: var(--font-title);
+      font-size: clamp(1.25rem, 2.1vw, 2rem);
+      line-height: 1.4;
+      font-weight: 400;
+    }
+
+    /* ---- Panel 3: datos ---- */
+    .fields {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(150px, 15vw));
+      gap: 2.4rem 3vw;
+    }
+    .field dd {
+      font-family: var(--font-title);
+      font-size: clamp(1.1rem, 1.6vw, 1.5rem);
+      line-height: 1.2;
+    }
+    .field.wide { grid-column: 1 / -1; }
+    .tools { display: flex; flex-wrap: wrap; gap: 1.2rem; }
+    .tool {
+      font-family: var(--font-body);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 0.5rem;
+      font-size: 0.72rem;
+      font-weight: 600;
+      letter-spacing: 0.04em;
+    }
+    .tool .ico {
+      width: clamp(48px, 4.6vw, 68px);
+      aspect-ratio: 1;
+      border-radius: 50%;
+      background: #330000 var(--img) center / 105% no-repeat;
+      box-shadow: 0 8px 20px rgba(0, 0, 0, 0.28);
+    }
+
+    /* ---- Panel 4: proceso (etapa + 2 imágenes con texto) ---- */
+    .stages { display: flex; gap: 5vw; align-items: flex-start; }
+    .stage { display: flex; gap: 2.4vw; align-items: flex-start; }
+
+    .step {
+      position: relative;
+      width: clamp(210px, 18vw, 280px);
+      padding: 1.2rem;
+      border-radius: 24px;
+      cursor: default;
+      outline: none;
+      transition: background 0.4s ease;
+    }
+    .step:hover, .step:focus-visible, .step.open { background: rgba(250, 250, 250, 0.1); }
+    .step .n {
+      display: block;
+      font-family: var(--font-title);
+      font-style: italic;
+      font-size: clamp(3rem, 6vw, 5.5rem);
+      line-height: 1;
+      color: rgba(250, 250, 250, 0.4);          /* tipografía rellena */
+      margin-bottom: 1rem;
+      transition: color 0.4s ease;
+    }
+    .step:hover .n, .step:focus-visible .n, .step.open .n { color: var(--paper); }
+    .step h3 {
+      font-family: var(--font-title);
+      font-weight: 600;
+      font-size: 1.35rem;
+      margin-bottom: 0.5rem;
+    }
+    .step p { font-size: 0.92rem; line-height: 1.5; opacity: 0.8; }
+
+    /* Texto ampliado: se despliega al pasar el mouse (o tocar) */
+    .step .more {
+      opacity: 0;
+      transform: translateY(14px);                 /* solo el texto sube: el bloque no se mueve ni cambia de tamaño */
+      transition: transform 0.55s cubic-bezier(0.2, 0.8, 0.2, 1), opacity 0.45s ease;
+    }
+    .step:hover .more, .step:focus-visible .more, .step.open .more { opacity: 1; transform: none; }
+    .step .more > p { padding-top: 0.9rem; }
+
+    .pair { display: flex; gap: 1.6vw; align-items: flex-start; }
+    .pair figure { width: var(--ps); }
+    .pair figure:nth-child(2) { margin-top: 7vh; }
+    .pair figcaption { margin-top: 0.8rem; font-size: 0.78rem; line-height: 1.45; opacity: 0.8; }
+
+    /* ---- Panel 5: UI Kit (recuadro cuadrado) ---- */
+    .uikit {
+      width: var(--us);
+      aspect-ratio: 1;
+      border-radius: 8px;
+      background: var(--paper);
+      overflow: hidden;
+    }
+    .uikit img { width: 100%; height: 100%; object-fit: cover; display: block; }
+    .uikit:empty { display: flex; align-items: center; justify-content: center; }
+    .uikit:empty::after {
+      content: attr(data-label);
+      font-size: 0.82rem;
+      font-weight: 600;
+      letter-spacing: 0.01em;
+      color: #B5ABA9;
+    }
+
+    /* ---- Panel 6: grilla de imágenes (2 por columna, círculos) ---- */
+    /* Galería asimétrica: columnas con tamaños, sangrías y alturas distintas */
+    .gal-grid { display: flex; align-items: center; gap: calc(var(--gg) * 1.6); }
+    .gal-col {
+      display: flex;
+      flex-direction: column;
+      align-items: flex-start;
+      gap: calc(var(--gg) * 0.8);
+      width: calc(var(--gl) * var(--w));
+      position: relative;
+      top: var(--y, 0vh);
+    }
+    .gal-col .ph { margin-left: calc(var(--gl) * var(--ml, 0)); }
+
+
+    /* ---- Caso de estudio extenso (proyectos con "sections", p. ej. Mesa) ---- */
+    :root { --is: min(44vh, 30vw); }
+    .p-sec { align-items: center; gap: 3vw; padding-right: 4vw; }
+    .sec-head { flex: none; width: clamp(200px, 20vw, 300px); align-self: center; }
+    .sec-head .n {
+      display: block; font-family: var(--font-title); font-style: italic;
+      font-size: clamp(3.4rem, 7vw, 6.4rem); line-height: 1; color: rgba(250,250,250,.4); margin-bottom: 1rem;
+    }
+    .sec-head h2 { font-family: var(--font-title); font-style: italic; font-weight: 400; font-size: clamp(1.5rem, 2.4vw, 2.4rem); line-height: 1.1; }
+    .col { flex: none; width: clamp(250px, 24vw, 380px); display: flex; flex-direction: column; gap: 1rem; max-height: calc(100vh - var(--header-h) - 70px); }
+    .col.img { width: var(--is); }
+    .col .lead { font-size: clamp(1.1rem, 1.55vw, 1.5rem); line-height: 1.4; }
+    .col p, .col li { font-size: clamp(.82rem, .98vw, .95rem); line-height: 1.55; opacity: .88; }
+    .col .h { font-family: var(--font-body); font-size: .85rem; color: var(--sel); }
+    .col .note { font-size: .74rem; line-height: 1.5; opacity: .65; }
+    .col ul.li { list-style: none; display: flex; flex-direction: column; gap: .6rem; }
+    .col ul.li li { position: relative; padding-left: 1.1rem; }
+    .col ul.li li::before { content: ""; position: absolute; left: 0; top: .6em; width: 6px; height: 6px; border-radius: 50%; background: var(--sel); }
+    .col .quote { font-family: var(--font-title); font-style: italic; font-size: clamp(1.3rem, 2vw, 2rem); line-height: 1.3; }
+    .card { background: rgba(250,250,250,.1); border-radius: 18px; padding: 1.2rem 1.3rem; display: flex; flex-direction: column; gap: .7rem; }
+    .card .k { font-family: var(--font-body); font-size: .8rem; color: var(--sel); }
+    .card h3 { font-family: var(--font-title); font-style: italic; font-weight: 400; font-size: clamp(1.15rem, 1.6vw, 1.5rem); line-height: 1.15; }
+    .card .stat { display: flex; align-items: baseline; gap: .5rem; font-family: var(--font-title); }
+    .card .stat b { font-size: clamp(2.4rem, 4vw, 3.6rem); font-weight: 400; font-style: italic; line-height: 1; }
+    .card .stat span { font-size: .85rem; opacity: .75; font-family: var(--font-body); }
+    .card .sec p { margin-top: .25rem; }
+    .chip { align-self: flex-start; padding: .18rem .7rem; border-radius: 999px; background: var(--paper); color: var(--primary); font-size: .72rem; font-weight: 600; }
+    .chip.alt { background: var(--sel); color: var(--primary-deep); }
+    .steps { list-style: none; display: flex; flex-direction: column; gap: .8rem; counter-reset: st var(--st, 0); }
+    .steps li { display: flex; gap: .8rem; align-items: flex-start; counter-increment: st; opacity: 1 !important; }
+    .steps li::before { content: counter(st, decimal-leading-zero); flex: none; font-family: var(--font-title); font-style: italic; font-size: 1.15rem; color: var(--sel); min-width: 1.9rem; line-height: 1.3; }
+    .steps b { display: block; font-weight: 600; font-size: .92rem; line-height: 1.35; }
+    .steps span { display: block; font-size: .84rem; opacity: .75; line-height: 1.45; }
+    .tagrow { display: flex; flex-wrap: wrap; gap: .5rem; }
+    .tagrow .chip { background: rgba(250,250,250,.14); color: var(--paper); font-weight: 400; }
+    /* Placeholder de imagen con la indicación de qué va */
+    .ph.sq.note-img {
+      display: flex; flex-direction: column; justify-content: space-between; gap: 1rem;
+      padding: 1.3rem; border-radius: 10px; background: var(--paper); color: var(--primary);
+    }
+    .ph.sq.note-img b { font-family: var(--font-body); font-weight: 600; font-size: .8rem; color: var(--primary); }
+    .ph.sq.note-img span { font-size: clamp(.78rem, .95vw, .92rem); line-height: 1.5; color: #6B5B59; }
+
+
+    /* ======================================================================
+       MESA · diseño propio del interior (todas las clases empiezan con mz-)
+       Tipografías: Kalnia (títulos y textos destacados, en redonda), Inter (cuerpo)
+       y Outfit (tarjetas de las user personas, igual que en Figma).
+       ====================================================================== */
+    .mz { --mh: calc(100vh - var(--header-h) - 56px); --fz: clamp(.56rem, 1.34vh, .76rem); gap: 4vw; padding-right: 4vw; }
+    .mz .label { display: block; margin-bottom: .7rem; }
+
+    /* Encabezado de sección: número y título con EL MISMO tamaño en todas las secciones */
+    .mz-head { flex: none; }
+    .mz-head .n { display: block; font-family: var(--font-title); font-style: normal; font-weight: 400; font-size: clamp(2.6rem, 4.4vw, 3.9rem); line-height: 1; color: rgba(250,250,250,.4); margin-bottom: .7rem; }
+    .mz-head h2 { font-family: var(--font-title); font-style: normal; font-weight: 600; font-size: clamp(1.2rem, 1.8vw, 1.65rem); line-height: 1.12; }
+    .mz-head.row { display: flex; align-items: baseline; gap: 1.2rem; margin-bottom: 1rem; }
+    .mz-head.row .n { margin-bottom: 0; }
+
+    .mz-col { flex: none; width: clamp(300px, 34vw, 520px); display: flex; flex-direction: column; }
+    .mz-col .mz-head, .mz-introl .mz-head { margin-bottom: 2.2rem; }
+    .mz-lead { font-family: var(--font-title); font-style: normal; font-size: clamp(.92rem, min(1.25vw, 2.4vh), 1.18rem); line-height: 1.38; font-weight: 400; }
+    .mz-lead b { font-weight: 600; }
+    .mz-lead.gap { margin-top: 1.6rem; }
+    .mz-body { font-size: clamp(.78rem, min(1.05vw, 1.9vh), .95rem); line-height: 1.6; opacity: .88; margin-bottom: 1.4rem; }
+
+    /* Primera sección: descripción · pantallas · ficha · programas */
+    .mz-info { gap: 3vw; }
+    .mz-desc { flex: none; width: clamp(260px, 27vw, 420px); }
+    .mz-desc .mz-lead { font-size: clamp(.95rem, min(1.35vw, 2.6vh), 1.25rem); }
+    .mz-screens { flex: none; width: clamp(420px, 50vw, 820px); }
+    .mz-screens img { width: 100%; height: auto; display: block; }
+    .mz-ficha { flex: none; align-self: center; display: flex; flex-direction: column; gap: 2.2vh; padding: 1.2rem 0 1.2rem 2.4vw; border-left: 1px solid rgba(250,250,250,.28); min-width: clamp(150px, 14vw, 220px); }
+    .mz-ficha .label { margin-bottom: .35rem; }
+    .mz-ficha dd { font-family: var(--font-title); font-size: clamp(.9rem, 1.2vw, 1.1rem); line-height: 1.25; opacity: .82; }
+    /* Jerarquía de lectura: nombre del proyecto (grande) › categoría (media) › datos (chicos) */
+    .mz-ficha > div:nth-child(1) dd { font-size: clamp(1.6rem, 2.5vw, 2.3rem); line-height: 1.08; font-weight: 600; opacity: 1; }
+    .mz-ficha > div:nth-child(2) dd { font-size: clamp(1.1rem, 1.6vw, 1.4rem); opacity: .95; }
+    .mz-ficha > div:nth-child(1) { padding-bottom: .9rem; border-bottom: 1px solid rgba(250,250,250,.2); }
+    .mz-progs { flex: none; align-self: flex-start; margin-top: calc((var(--mh) - 100px) * .16); }
+    .mz-progs-row { display: flex; gap: .9rem; }
+    .mz-progs .sq { width: clamp(54px, 5.4vw, 84px); aspect-ratio: 1; border-radius: 18px; background: #E4E0DF var(--img) center / 64% no-repeat; }
+
+    /* 01 Presentación: tal cual el diseño */
+    .mz-intro { gap: 4vw; }
+    .mz-introl { flex: none; width: clamp(260px, 26vw, 400px); position: relative; }
+    .mz-introl::after { content: ""; position: absolute; right: -2vw; top: 62%; width: 1px; height: 2.2rem; background: rgba(250,250,250,.3); }
+    .mz-intror { flex: none; height: var(--mh); display: grid; grid-template-columns: clamp(250px, 24vw, 380px) clamp(300px, 33vw, 520px); grid-template-rows: auto auto; column-gap: 3.4vw; row-gap: 1.6rem; align-content: center; }
+    .mz-dia { grid-column: 1; grid-row: 1; align-self: start; }
+    .dia-svg { width: 100%; height: auto; display: block; overflow: visible; margin-top: 1.2rem; }
+    .dia-svg text { font-family: var(--font-body); font-size: 10.5px; fill: #FAFAFA; text-anchor: middle; }
+    .dia-t text { font-weight: 700; }
+    .dia-b text { font-size: 9.6px; }
+    .mz-strat { grid-column: 2; grid-row: 1; align-self: center; background: rgba(250,250,250,.1); border-radius: 28px; padding: 1.5rem 1.8rem 1.7rem; }
+    .mz-strat .mz-lead { font-size: clamp(.9rem, min(1.2vw, 2.3vh), 1.1rem); }
+    .mz-brandcol { grid-column: 1 / 3; grid-row: 2; align-self: start; width: min(100%, 52vw); }
+    .mz-brandimg { width: 100%; height: auto; display: block; border-radius: 22px; box-shadow: 0 18px 40px rgba(0,0,0,.28); }
+
+    /* Descripción del doble diamante + etapas + escenario */
+    .mz-dtxt { flex: none; width: clamp(240px, 22vw, 340px); }
+    .mz-prob { font-size: clamp(.74rem, min(.95vw, 1.7vh), .88rem); line-height: 1.55; opacity: .88; }
+    .mz-prob b { color: var(--sel); font-weight: 600; margin-right: .4rem; }
+    .mz-stages { flex: none; width: clamp(340px, 38vw, 600px); display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
+    .mz-stage { background: rgba(250,250,250,.1); border-radius: 22px; padding: 1.1rem 1.2rem 1.2rem; position: relative; }
+    .mz-stage .num { position: absolute; top: .9rem; right: 1rem; width: 2rem; height: 2rem; border-radius: 50%; background: var(--sel); color: var(--primary-deep); font-weight: 700; font-size: .85rem; display: grid; place-items: center; }
+    .mz-stage h3 { font-family: var(--font-title); font-style: normal; font-weight: 600; font-size: clamp(1.05rem, 1.4vw, 1.3rem); margin: 1.6rem 0 .5rem; }
+    .mz-stage p { font-size: clamp(.7rem, min(.88vw, 1.6vh), .84rem); line-height: 1.55; opacity: .88; }
+    .mz-3 { flex: none; width: clamp(240px, 22vw, 340px); display: flex; flex-direction: column; gap: 1.2rem; }
+    .mz-3 h4 { font-family: var(--font-title); font-style: normal; font-weight: 600; font-size: clamp(1rem, 1.3vw, 1.2rem); margin-bottom: .25rem; }
+    .mz-3 p { font-size: clamp(.72rem, min(.9vw, 1.6vh), .86rem); line-height: 1.5; opacity: .85; }
+
+    /* User personas */
+    .mz-ptitle { flex: none; width: clamp(130px, 13vw, 200px); }
+    .mz-ptitle h2 { font-family: var(--font-title); font-style: normal; font-weight: 600; font-size: clamp(1.5rem, 2.4vw, 2.2rem); line-height: 1.1; }
+    .mz-plist { flex: none; display: flex; flex-direction: column; gap: 2.2vh; }
+    .mz-persona { --W: clamp(640px, 78vw, 1180px); --H: calc((var(--mh) - 2.2vh) / 2); position: relative; width: var(--W); height: var(--H); font-family: 'Outfit', var(--font-body); }
+    .mz-persona .pl { position: absolute; left: 0; top: 0; bottom: 0; width: 38%; background: rgba(250,250,250,.1); border-radius: 22px; padding: 6% 0 0 6%; }
+    .mz-persona .pl h3 { font-family: 'Outfit', var(--font-body); font-weight: 700; font-size: clamp(1rem, min(1.6vw, 3.2vh), 1.5rem); line-height: 1.12; }
+    .mz-persona .q { font-size: clamp(.68rem, min(.85vw, 1.6vh), .82rem); margin-top: .5rem; max-width: 11ch; opacity: .9; }
+    .mz-persona .qm { font-family: var(--font-title); font-size: clamp(2rem, 4vh, 3rem); line-height: 1; color: var(--sel); display: block; margin-top: .3rem; }
+    .mz-persona .pl img { position: absolute; right: 2%; bottom: 0; height: 104%; width: auto; max-width: 68%; object-fit: contain; object-position: bottom right; filter: drop-shadow(0 12px 18px rgba(0,0,0,.3)); pointer-events: none; }
+    .mz-persona .pc { position: absolute; top: 20%; bottom: 20%; left: 32%; width: 36%; background: var(--paper); color: #2B1411; border-radius: 22px; overflow: hidden; box-shadow: 0 16px 38px rgba(0,0,0,.3); outline: none; z-index: 2; transition: width .55s cubic-bezier(.2,.8,.2,1), top .55s cubic-bezier(.2,.8,.2,1), bottom .55s cubic-bezier(.2,.8,.2,1); }
+    /* el perfil completo se abre SOLO al pasar sobre el recuadro blanco */
+    .mz-persona .pc:focus-visible, .mz-persona .pc.open { width: 68%; top: 0; bottom: 0; }
+    .mz-persona .pc-in { position: absolute; inset: 0; width: calc(var(--W) * .68); padding: 1rem 1.3rem; display: grid; grid-template-columns: calc(var(--W) * .36 - 2.6rem) 1fr; column-gap: 1.3rem; align-content: start; font-size: var(--fz); }
+    .mz-persona h4 { font-family: 'Outfit', var(--font-body); font-weight: 700; font-size: 1.05em; color: #2B1411; margin-bottom: .15rem; }
+    .mz-persona .perfil { display: grid; grid-template-columns: repeat(4, 1fr); gap: .35rem; margin-top: .2rem; }
+    .mz-persona .perfil div { display: flex; flex-direction: column; align-items: center; text-align: center; gap: .1rem; }
+    .mz-persona .perfil i { width: 1.8em; height: 1.8em; color: var(--primary); }
+    .mz-persona .perfil svg { width: 100%; height: 100%; fill: none; stroke: currentColor; stroke-width: 1.6; stroke-linecap: round; stroke-linejoin: round; }
+    .mz-persona .perfil b { font-size: .9em; font-weight: 600; }
+    .mz-persona .perfil span { font-size: .88em; line-height: 1.3; color: #5B4642; }
+    .mz-persona .pc-main { position: relative; padding-bottom: 1.6em; }
+    .mz-persona .more-hint { position: absolute; left: 0; bottom: 0; display: inline-flex; align-items: center; gap: .5rem; font-size: .86em; color: var(--primary-hover); font-weight: 600; transition: opacity .3s; }
+    .mz-persona .pc:focus-visible .more-hint, .mz-persona .pc.open .more-hint { opacity: 0; }
+    .mz-persona .pc-rest { opacity: 0; transform: translateY(8px); transition: opacity .35s .12s, transform .45s .12s; display: flex; flex-direction: column; gap: .55rem; }
+    .mz-persona .c1 .pc-rest { margin-top: .1rem; }
+    .mz-persona .pc:focus-visible .pc-rest, .mz-persona .pc.open .pc-rest { opacity: 1; transform: none; }
+    .mz-persona .pc-rest p { line-height: 1.4; color: #3A2A27; font-size: .94em; }
+    @media (hover: hover) {
+      .mz-persona .pc:hover { width: 68%; top: 0; bottom: 0; }
+      .mz-persona .pc:hover .more-hint { opacity: 0; }
+      .mz-persona .pc:hover .pc-rest { opacity: 1; transform: none; }
+    }
+
+    /* Benchmark */
+    .mz-benchs { align-items: flex-start; gap: 2vw; padding-top: calc(var(--header-h) - 14px); }
+    .mz-bench .bc:hover .bc-more-in, .mz-bench .bc[aria-expanded="true"] .bc-more-in { max-height: calc(100vh - 590px); }
+    .mz-bench { flex: none; width: clamp(280px, 27vw, 410px); display: flex; flex-direction: column; gap: .7rem; --fz: clamp(.58rem, 1.38vh, .76rem); }
+    .mz-bench .bh { background: var(--paper); color: var(--primary-deep); border-radius: 999px; padding: .55rem 1.4rem .55rem .6rem; display: flex; align-items: center; gap: 1rem; box-shadow: 0 10px 26px rgba(0,0,0,.22); }
+    .mz-bench .bh .lg { flex: none; width: clamp(46px, 7.4vh, 64px); aspect-ratio: 1; border-radius: 50%; overflow: hidden; background: #fff; display: block; }
+    .mz-bench .bh .lg img { width: 100%; height: 100%; object-fit: cover; display: block; }
+    .mz-bench .bh h3 { font-family: var(--font-title); font-style: normal; font-weight: 600; font-size: clamp(1.1rem, 1.6vw, 1.5rem); line-height: 1.1; }
+    .mz-bench .bh .kind { font-size: .78rem; color: #C0453A; }
+    .mz-bench .bc { box-sizing: border-box; display: flex; flex-direction: column; width: 100%; background: var(--paper); color: #2B1411; border-radius: 26px; padding: 1.1rem 1.3rem 1rem; font-size: var(--fz); box-shadow: 0 14px 34px rgba(0,0,0,.26); transition: transform .3s; outline: none; cursor: default; }
+    .mz-bench .bc:focus-visible { outline: 2px solid var(--sel); outline-offset: 3px; }
+    .mz-bench h4 { font-family: var(--font-body); font-weight: 700; font-size: .96em; color: #C0453A; margin: .7rem 0 .25rem; }
+    .mz-bench h4:first-child { margin-top: 0; }
+    .mz-bench p, .mz-bench li { line-height: 1.45; color: #2B1411; font-size: 1em; }
+    .mz-bench .steps-n { font-family: var(--font-title); font-size: clamp(1.7rem, 3.4vh, 2.4rem); line-height: 1; }
+    .mz-bench .bc-more { display: grid; grid-template-rows: 0fr; transition: grid-template-rows .5s cubic-bezier(.2,.8,.2,1); }
+    .mz-bench .bc-more-in { overflow: hidden; min-height: 0; opacity: 0; padding-top: .7rem; transition: opacity .35s; }
+    .mz-bench .bc[aria-expanded="true"] .bc-more, .mz-bench .bc:focus-visible .bc-more { grid-template-rows: 1fr; }
+    .mz-bench .bc[aria-expanded="true"] .bc-more-in, .mz-bench .bc:focus-visible .bc-more-in { opacity: 1; transition-delay: .15s; overflow-y: auto; max-height: calc(100vh - 590px); padding-right: .5rem; scrollbar-width: thin; scrollbar-color: #C0453A transparent; }
+    @media (hover: hover) {
+      .mz-bench .bc:hover .bc-more { grid-template-rows: 1fr; }
+      .mz-bench .bc:hover .bc-more-in { opacity: 1; transition-delay: .15s; overflow-y: auto; max-height: calc(100vh - 590px); padding-right: .5rem; scrollbar-width: thin; scrollbar-color: #C0453A transparent; }
+      .mz-bench .bc:hover .bc-hint i::after { transform: translate(-50%, -50%) rotate(0); }
+      .mz-bench .bc:hover .bc-hint { opacity: .55; }
+    }
+    .mz-bench .mz-grp { margin-bottom: .35rem; }
+    .mz-bench .mz-grp em { font-size: .94em; color: #5B4642; }
+    .mz-bench ul { list-style: disc; padding-left: 1.1rem; margin-top: .15rem; display: flex; flex-direction: column; gap: .25rem; }
+    .mz-bench .bc-hint { display: flex; align-items: center; gap: .55rem; margin-top: .8rem; color: var(--primary-hover); font-weight: 600; font-size: .94em; transition: opacity .3s; }
+    .mz-bench .bc-hint i { width: 1.5em; height: 1.5em; border-radius: 50%; background: var(--primary); position: relative; flex: none; animation: mzpulse 2s ease-in-out infinite; }
+    .mz-bench .bc-hint i::before, .mz-bench .bc-hint i::after { content: ""; position: absolute; left: 50%; top: 50%; background: var(--paper); width: .7em; height: 2px; transform: translate(-50%, -50%); transition: transform .3s; }
+    .mz-bench .bc-hint i::after { transform: translate(-50%, -50%) rotate(90deg); }
+    .mz-bench .bc[aria-expanded="true"] .bc-hint i::after { transform: translate(-50%, -50%) rotate(0); }
+    @keyframes mzpulse { 0%, 100% { box-shadow: 0 0 0 0 rgba(96,15,8,.35); } 50% { box-shadow: 0 0 0 7px rgba(96,15,8,0); } }
+
+    /* 03 Requisitos: título al inicio (abajo) y recuadros escalonados, sin encimarse */
+    .mz-reqs { gap: 2vw; align-items: stretch; padding-top: calc(var(--header-h) + 3vh); padding-bottom: 7vh; }
+    .mz-reqhead { flex: none; align-self: flex-end; width: clamp(170px, 14vw, 220px); }
+    .mz-reqhead .hint { margin-top: 1rem; font-size: .78rem; opacity: .6; max-width: 20ch; }
+    .mz-stack { flex: none; align-self: center; display: flex; flex-direction: column; gap: clamp(.7rem, 1.8vh, 1.2rem); cursor: pointer; width: clamp(420px, 56vw, 860px); }
+    .mz-stack .rq { all: unset; box-sizing: border-box; display: flex; gap: .55rem; align-items: center; margin-left: calc(var(--i) * 4.2vw); width: min(34vw, 520px); min-height: clamp(58px, 9.6vh, 84px); padding: .7rem 2rem; border-radius: 999px; background: rgba(250,250,250,.12); color: var(--paper); font-family: var(--font-title); font-size: clamp(.8rem, min(1.05vw, 2vh), 1rem); line-height: 1.3; transition: transform .45s cubic-bezier(.2,.8,.2,1), background .3s, color .3s, box-shadow .3s; }
+    .mz-stack .rq .rn { flex: none; }
+    .mz-stack .rq.on { background: var(--paper); color: var(--primary); transform: translateX(1.6vw) scale(1.03); box-shadow: 0 16px 34px rgba(0,0,0,.35); }
+    .mz-stack .rq:focus-visible { outline: 2px solid var(--sel); outline-offset: 3px; }
+
+    /* 04 Análisis del primer prototipo */
+    .mz-heur { gap: 5vw; }
+    .mz-heurcol { flex: none; width: clamp(300px, 30vw, 460px); display: flex; flex-direction: column; gap: 1.1rem; }
+    .mz-heurcol .hc { background: rgba(250,250,250,.1); border-radius: 22px; padding: 1.1rem 1.4rem 1.2rem; }
+    .mz-heurcol h3 { font-family: var(--font-title); font-style: normal; font-weight: 600; font-size: clamp(.95rem, min(1.2vw, 2.2vh), 1.15rem); line-height: 1.25; }
+    .mz-heurcol b { display: block; margin: .55rem 0 .35rem; font-size: .64rem; letter-spacing: .08em; color: var(--sel); font-weight: 700; }
+    .mz-heurcol p { font-size: clamp(.66rem, min(.8vw, 1.5vh), .78rem); line-height: 1.55; opacity: .9; }
+
+    /* Testeos: eficiencia y eficacia, con más aire entre bloques */
+    .mz-tests { padding-left: 6vw; }
+
+    /* BeBeMi · video final (16:9) y textos cortos bajo las imágenes */
+    .bb-vid.frame { width: min(72vw, calc(var(--mh) * 16 / 9 * .9)); height: auto; aspect-ratio: 16 / 9; background: var(--primary-deep); }
+    .p-proto video { width: 100%; height: 100%; display: block; object-fit: contain; background: var(--primary-deep); }
+    .bb-cap { font-size: .85rem; line-height: 1.5; opacity: .88; max-width: 30ch; }
+    /* BeBeMi · paleta en círculos de mayor a menor */
+    .bb-palbox { flex: none; align-self: center; }
+    .bb-dots { display: flex; flex-direction: column; align-items: flex-start; gap: .7rem; margin-top: .6rem; }
+    .bb-dot { display: flex; flex-direction: row; align-items: center; gap: .9rem; }
+    .bb-dot i { display: block; flex: none; width: calc(var(--k) * clamp(60px, 7.4vh, 84px)); aspect-ratio: 1; border-radius: 50%; }
+    .bb-dot b { font-size: .7rem; font-weight: 600; letter-spacing: .02em; opacity: .9; }
+
+    /* BeBeMi · poses en círculos con organización orgánica; la descripción sale con el hover (o un toque) */
+    .bb-poses { --H: calc(var(--mh) * .68); position: relative; flex: none; width: calc(var(--H) * 1.64); height: var(--H); }
+    .bb-pose { position: absolute; left: calc(var(--H) * var(--x)); top: calc(var(--H) * var(--y)); width: calc(var(--H) * var(--d)); aspect-ratio: 1; border-radius: 50%; overflow: hidden; background: #fff; container-type: size; box-shadow: 0 14px 30px rgba(0,0,0,.28); outline: none; transition: transform .45s cubic-bezier(.2,.8,.2,1); }
+    .bb-pose img { width: 100%; height: 100%; object-fit: cover; display: block; }
+    .bb-pose .hpw { position: absolute; left: 0; right: 0; bottom: 9%; display: grid; place-items: center; pointer-events: none; transition: opacity .25s; }
+    .bb-pose.small .hpw { bottom: 4%; }
+    .bb-pose.small .hp { width: 1.1rem; height: 1.1rem; }
+    .bb-pose:hover .hpw, .bb-pose:focus-visible .hpw, .bb-pose.open .hpw { opacity: 0; }
+    .bb-pose .info { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3cqw; padding: 12%; text-align: center; color: #fff; background: rgba(63,10,5,.88); opacity: 0; transition: opacity .3s ease; pointer-events: none; }
+    .bb-pose .info b { font-family: var(--font-title); font-weight: 600; font-size: .99rem; line-height: 1.12; }
+    .bb-pose .info span { font-size: .79rem; line-height: 1.4; }
+    .bb-pose.small .info { padding: 8%; gap: .1rem; } .bb-pose.small .info b { font-size: .6rem; } .bb-pose.small .info span { font-size: .48rem; line-height: 1.3; }   /* la zanahoria crece 1,5×: el texto queda del mismo tamaño que en las otras */
+    .bb-pose:focus-visible, .bb-pose.open { z-index: 3; }
+    .bb-pose:focus-visible .info, .bb-pose.open .info { opacity: 1; }
+    .bb-pose.small.open { transform: scale(1.5); }
+    @media (hover: hover) {
+      .bb-pose:hover { z-index: 3; transform: scale(1.05); }
+      .bb-pose.small:hover { transform: scale(1.5); }
+      .bb-pose:hover .info { opacity: 1; }
+    }
+
+    /* BeBeMi y Dr. Martens · tarjetas chicas (solo el título) que se agrandan con el hover y muestran el texto */
+    .af-cards.bb-cards { align-items: flex-start; min-height: clamp(300px, 52vh, 400px); }
+    .af-cards.bb-cards.grid2 { display: grid; grid-template-columns: repeat(2, clamp(230px, 20vw, 300px)); gap: 1rem; align-items: start; align-content: start; min-height: clamp(330px, 56vh, 440px); }
+    .af-card.bb-rv { position: relative; width: clamp(230px, 20vw, 300px); gap: 0; padding: 1.3rem 4rem 1.3rem 1.5rem; outline: none; transition: background .3s ease, padding .4s ease, box-shadow .4s ease; }
+    .af-card.bb-rv .num { font-size: 1.8rem; margin-bottom: .3rem; }
+    .af-card.bb-rv h3 { font-size: clamp(1rem, 1.35vw, 1.25rem); }
+    .af-card.bb-rv p { max-height: 0; opacity: 0; overflow: hidden; margin-top: 0; transform: translateY(8px); transition: max-height .55s ease, opacity .35s ease, margin-top .4s ease, transform .4s ease; }
+    .af-card.bb-rv .hp { position: absolute; top: 1.2rem; right: 1.2rem; }
+    .af-card.bb-rv:focus-visible, .af-card.bb-rv.open { background: rgba(250,250,250,.16); padding-bottom: 1.6rem; box-shadow: 0 16px 34px rgba(0,0,0,.28); z-index: 2; }
+    .af-card.bb-rv:focus-visible p, .af-card.bb-rv.open p { max-height: 22rem; opacity: 1; margin-top: .9rem; transform: none; }
+    @media (hover: hover) {
+      .af-card.bb-rv:hover { background: rgba(250,250,250,.16); padding-bottom: 1.6rem; box-shadow: 0 16px 34px rgba(0,0,0,.28); z-index: 2; }
+      .af-card.bb-rv:hover p { max-height: 22rem; opacity: 1; margin-top: .9rem; transform: none; }
+    }
+    .bb-hint { font-size: .85rem; opacity: .7; margin-top: 1rem; }
+
+    /* BeBeMi · storyboard: una imagen que cambia entre los 4 cuadros */
+    .bb-sb { flex: none; width: min(56vw, 860px); display: grid; gap: 1.1rem; }
+    .bb-sb2 { flex: none; width: min(62vw, 920px); display: grid; gap: 1.1rem; }
+    .bb-sb2 .row { display: grid; grid-template-columns: .8fr 1.5fr; gap: 3vw; align-items: center; margin-top: .4rem; }
+    .bb-sb2 .l .mz-head { margin-bottom: .9rem; } .bb-sb2 .bb-sb-txt { min-height: 6.5rem; max-width: none; }
+    .bb-sb-img { position: relative; aspect-ratio: 1884 / 598; border-radius: 24px; overflow: hidden; background: #fff; box-shadow: 0 18px 40px rgba(0,0,0,.28); }
+    .bb-sb-img img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; opacity: 0; transition: opacity .7s ease; }
+    .bb-sb-img img.on { opacity: 1; }
+    .bb-sb-nav { display: flex; justify-content: center; gap: .5rem; }
+    .bb-sb-nav button { width: 2.5rem; height: 2.5rem; border: 0; border-radius: 50%; background: rgba(250,250,250,.14); color: #fff; font: 600 .9rem var(--font-body); cursor: pointer; transition: background .25s, color .25s, transform .25s; }
+    .bb-sb-nav button:hover, .bb-sb-nav button:focus-visible { background: rgba(250,250,250,.26); outline: none; }
+    .bb-sb-nav button.on { background: #fff; color: var(--primary); }
+    .bb-sb-txt { min-height: 8.5rem; max-width: 62ch; }
+    .bb-sb-txt > div { display: none; }
+    .bb-sb-txt > div.on { display: block; animation: bbIn .5s ease both; }
+    .bb-sb-txt .label { margin-bottom: .5rem; }
+    /* Dr. Martens · visores (cuadros fijos y planos): imagen + números al centro | capas + texto */
+    .bb-sb.dm-sb { width: auto; display: grid; grid-template-columns: min(46vw, calc(var(--mh) * .8 * 16 / 9)) clamp(250px, 25vw, 360px); gap: 2.4vw; align-items: center; }
+    .dm-sb .bb-sb-img { aspect-ratio: 16 / 9; background: #000; }
+    .dm-sb .dm-l { display: grid; gap: 1.1rem; }
+    .dm-sb .dm-r { display: grid; gap: 1.1rem; align-content: center; }
+    /* Las capas se ajustan al tamaño y proporción propios de cada captura (sin contenedor fijo) */
+    .dm-sb .bb-sb-lay { display: block; }
+    .dm-sb .bb-sb-lay img { display: none; width: auto; height: auto; max-width: min(100%, 360px); max-height: calc(var(--mh) * .4); border-radius: 12px; box-shadow: 0 10px 24px rgba(0,0,0,.28); }
+    .dm-sb .bb-sb-lay img.on { display: block; animation: bbIn .5s ease both; }
+    /* Scroller entre planos: flechas + deslizador + contador (en lugar de números) */
+    /* Paleta y tipografía mostradas de forma tradicional */
+    .dm-pal { display: flex; align-items: flex-end; gap: 1rem; margin-top: .4rem; }
+    .dm-pal div { display: flex; flex-direction: column; align-items: center; gap: .55rem; font-size: .76rem; font-weight: 600; letter-spacing: .02em; }
+    .dm-pal i { display: block; width: var(--s); aspect-ratio: 1; border-radius: 50%; box-shadow: 0 0 0 2px rgba(250,250,250,.3); }
+    .dm-trad { flex: none; width: clamp(260px, 25vw, 380px); display: flex; flex-direction: column; gap: 1rem; }
+    .dm-trad .typ { background: #000; border-radius: 22px; padding: 1.2rem 1rem; overflow: hidden; }
+    .dm-trad .typ img { width: 100%; height: auto; display: block; }
+    .dm-sb .bb-sb-txt { min-height: 0; max-width: none; }
+    .dm-sb.dm-pl .bb-sb-txt .mz-body, .dm-sb.dm-cf .bb-sb-txt .mz-body { font-size: clamp(.72rem, min(.95vw, 1.8vh), .88rem); }
+    /* Centrado vertical: los paneles de los casos tenían 36px de aire solo abajo, lo que subía todo el contenido */
+    .panel.mz.af-specp, .panel.mz.af-pres, .panel.mz.af-id, .panel.mz.af-mock, .panel.mz.af-case, .panel.mz.mz-info, .panel.mz.mz-protosec, .panel.mz.dm-art { padding-bottom: 0; }   /* el centrado fino lo hace centerBlocks() en el script */
+
+    /* BeBeMi · concepto: camino de saltos (círculos sobre una línea punteada; el texto sale en un globo con el hover) */
+    .bb-hop { position: relative; flex: none; width: min(62vw, 900px); height: calc(var(--mh) * .86); color: rgba(250,250,250,.4); }
+    .bb-col { flex: none; display: flex; flex-direction: column; gap: 1.2rem; width: min(64vw, 920px); }
+    .bb-top { display: flex; }
+    .bb-how { display: flex; align-items: baseline; gap: 1.2rem; margin-top: 1rem; } .bb-how .mz-body { margin: 0; font-size: .8rem; max-width: 62ch; } .bb-how .label { margin: 0; flex: none; }
+    .bb-top .mz-head { margin-bottom: 0; } .bb-top .mz-lead { max-width: 52ch; }
+    .bb-hop.up { width: 100%; height: calc(var(--mh) * .56); }
+    .bb-hop.up .bb-node.n1 { left: 18%; top: 82%; } .bb-hop.up .bb-node.n2 { left: 50%; top: 52%; } .bb-hop.up .bb-node.n3 { left: 82%; top: 22%; }
+    .bb-hop.up .bb-node .bubble { top: auto; bottom: calc(100% + 14px); }
+    .bb-hop.up .bb-node.n3 .bubble { top: calc(100% + 14px); bottom: auto; }
+    .bb-hop.up .bb-node.n2 .bubble { top: calc(100% + 26px); bottom: auto; }
+    .bb-hop.up .bb-node:hover .orb, .bb-hop.up .bb-node.n2:hover .orb { transform: scale(1.07); }
+    .bb-hop.up .bb-node:focus-visible .orb, .bb-hop.up .bb-node.n2:focus-visible .orb, .bb-hop.up .bb-node.open .orb { transform: scale(1.07); }
+    .bb-hop .path { position: absolute; inset: 0; width: 100%; height: 100%; overflow: visible; }
+    .bb-hop .path path { vector-effect: non-scaling-stroke; }
+    .bb-node { position: absolute; transform: translate(-50%, -50%); outline: none; z-index: 1; }
+    .bb-node.n1 { left: 22%; top: 30%; --c: #ff6f61; --t: #fff; } .bb-node.n2 { left: 50%; top: 78%; --c: #bae8e5; --t: #1d4a47; } .bb-node.n3 { left: 78%; top: 30%; --c: #ffdab9; --t: #5a1d1d; }
+    .bb-node .orb { display: grid; place-items: center; width: clamp(150px, 14vw, 190px); aspect-ratio: 1; padding: 1rem; border-radius: 50%; background: var(--c); color: var(--t); text-align: center; box-shadow: 0 14px 30px rgba(0,0,0,.3); transition: transform .5s cubic-bezier(.3,1.5,.5,1); }
+    .bb-node .orb b { font-family: var(--font-title); font-weight: 600; font-size: 1.02rem; line-height: 1.15; }
+    .bb-node .bubble { position: absolute; left: 50%; width: clamp(220px, 21vw, 300px); padding: 1.1rem 1.3rem; border-radius: 22px; background: var(--paper); color: #2a1816; font-size: .85rem; line-height: 1.5; box-shadow: 0 16px 34px rgba(0,0,0,.3); opacity: 0; pointer-events: none; transform: translate(-50%, 8px) scale(.94); transition: opacity .3s ease, transform .4s cubic-bezier(.3,1.4,.5,1); }
+    .bb-node.n1 .bubble, .bb-node.n3 .bubble { top: calc(100% + 12px); } .bb-node.n2 .bubble { bottom: calc(100% + 26px); }
+    .bb-node.n2:focus-visible .orb, .bb-node.n2.open .orb { transform: translateY(10px) scale(1.06); }   /* el del medio se hunde en vez de subir, para no chocar con su globo */
+    .bb-node:focus-visible .orb, .bb-node.open .orb { transform: translateY(-14px) scale(1.06); }
+    .bb-node:focus-visible .bubble, .bb-node.open .bubble { opacity: 1; transform: translate(-50%, 0) scale(1); }
+    .bb-node:focus-visible, .bb-node.open { z-index: 3; }
+    @media (hover: hover) { .bb-node:hover { z-index: 3; } .bb-node:hover .orb { transform: translateY(-14px) scale(1.06); } .bb-node.n2:hover .orb { transform: translateY(10px) scale(1.06); } .bb-node:hover .bubble { opacity: 1; transform: translate(-50%, 0) scale(1); } }
+
+    /* Dr. Martens · dirección de arte en collage dinámico */
+    .dm-art { align-items: flex-start; gap: clamp(1.4rem, 2.6vw, 2.6rem); }
+    .dm-box { flex: none; width: clamp(220px, 21vw, 310px); display: flex; flex-direction: column; gap: 1rem; }
+    .dm-stack { flex: none; width: clamp(260px, 25vw, 350px); display: flex; flex-direction: column; align-items: flex-start; text-align: left; gap: clamp(1rem, 3vh, 1.8rem); }
+    .dm-stack .dm-box { width: 100%; gap: .6rem; }
+    .dm-stack .mz-body, .dm-photo .mz-body, .dm-sound .mz-body { font-size: clamp(.68rem, min(.86vw, 1.6vh), .82rem); line-height: 1.5; }
+    .dm-bubbles { display: flex; align-items: center; justify-content: space-between; width: 100%; padding: 1.2rem 0; }
+    .dm-bubbles i { --sz: calc(var(--k) * clamp(50px, 5vw, 74px)); position: relative; flex: none; width: var(--sz); aspect-ratio: 1; border-radius: 50%; background: var(--c); translate: 0 var(--dy, 0px); box-shadow: 0 0 0 2px rgba(250,250,250,.28), 0 12px 24px rgba(0,0,0,.4); display: grid; place-items: center; outline: none; transition: transform .4s cubic-bezier(.3,1.5,.5,1); }
+    .dm-bubbles i b { font-size: .6rem; font-weight: 700; color: #fff; text-shadow: 0 1px 2px rgba(0,0,0,.6); opacity: 0; transition: opacity .25s; }
+    .dm-bubbles i:nth-child(4) b, .dm-bubbles i:nth-child(5) b { color: #111; text-shadow: none; }
+    .dm-bubbles i:focus-visible { transform: scale(1.22); z-index: 2; } .dm-bubbles i:focus-visible b { opacity: 1; }
+    @media (hover: hover) { .dm-bubbles i:hover { transform: scale(1.22); z-index: 2; } .dm-bubbles i:hover b { opacity: 1; } }
+    .dm-poster .sheet { position: relative; background: #000; padding: .7rem .5rem 1rem; width: 112%; margin-inline: -6%; transform: rotate(-3deg); box-shadow: 0 16px 34px rgba(0,0,0,.4); clip-path: polygon(0 3%, 4% 0, 11% 2%, 19% 0, 28% 2%, 37% 0, 47% 2%, 58% 0, 69% 2%, 80% 0, 91% 2%, 100% 0, 99% 40%, 100% 70%, 98% 100%, 88% 98%, 76% 100%, 62% 98%, 49% 100%, 36% 98%, 22% 100%, 10% 98%, 0 100%, 1% 60%); transition: transform .5s cubic-bezier(.3,1.5,.5,1); overflow: hidden; }
+    .dm-poster .sheet img { width: 100%; height: auto; display: block; }
+    .dm-poster .sheet em { position: absolute; right: 1rem; bottom: .4rem; font-size: .66rem; letter-spacing: .12em; text-transform: uppercase; color: rgba(250,250,250,.55); }
+    @media (hover: hover) { .dm-poster:hover .sheet { transform: rotate(0) scale(1.04); } }
+    /* Tratamiento de imagen: foto pegada con cinta, sin tarjeta */
+    .dm-photo { width: clamp(220px, 20vw, 290px); }
+    .dm-photo .pol { position: relative; transform: rotate(2.5deg); background: #f4efe6; padding: .6rem .6rem 1.8rem; box-shadow: 0 16px 34px rgba(0,0,0,.4); transition: transform .5s cubic-bezier(.3,1.5,.5,1); }
+    .dm-photo .pol img { width: 100%; height: auto; display: block; }
+    .dm-photo .tape { position: absolute; left: 50%; top: -12px; width: 92px; height: 26px; transform: translateX(-50%) rotate(-4deg); background: rgba(245,213,0,.7); }
+    @media (hover: hover) { .dm-photo:hover .pol { transform: rotate(0) scale(1.04); } }
+    /* Vinilo: protagonista de la propuesta sonora */
+    .dm-sound { width: clamp(220px, 21vw, 310px); gap: .8rem; }
+    .dm-vinyl { position: relative; height: clamp(150px, 24vh, 215px); display: grid; place-items: center; }
+    .dm-vinyl .disc { position: relative; height: 100%; aspect-ratio: 1; border-radius: 50%; background: repeating-radial-gradient(circle at center, #0b0b0b 0 3px, #1b1b1b 3px 5px); box-shadow: 0 14px 30px rgba(0,0,0,.45); animation: dmSpin 4s linear infinite; display: grid; place-items: center; }
+    .dm-vinyl .lab { display: grid; place-content: center; width: 36%; aspect-ratio: 1; border-radius: 50%; background: #F5D500; color: #111; text-align: center; font-size: clamp(.42rem, .5vw, .55rem); line-height: 1.2; padding: 8%; overflow: hidden; box-shadow: 0 0 0 5px #0b0b0b; } .dm-vinyl .lab b { font-size: clamp(.5rem, .62vw, .68rem); }
+    @keyframes dmSpin { to { transform: rotate(360deg); } }
+    @media (prefers-reduced-motion: reduce) { .dm-vinyl .disc, .dm-bubbles i { animation: none; } }
+
+    /* PetStar · UI Kit con lupa circular y pantalla completa */
+    .zoomable { position: relative; display: inline-block; cursor: zoom-in; outline: none; border-radius: 24px; }
+    .zoomable:focus-visible { box-shadow: 0 0 0 3px var(--sel); }
+    .zoomable .lens { position: absolute; width: 190px; height: 190px; border-radius: 50%; border: 3px solid var(--paper); background-color: #fff; background-repeat: no-repeat; box-shadow: 0 14px 34px rgba(0,0,0,.45); pointer-events: none; opacity: 0; transform: scale(.6); transition: opacity .2s ease, transform .25s cubic-bezier(.3,1.4,.5,1); z-index: 3; }
+    .zoomable.on .lens { opacity: 1; transform: scale(1); }
+    .zoom-lb { position: fixed; inset: 0; z-index: 2000; background: rgba(40,6,3,.95); display: none; overflow: auto; padding: clamp(1rem, 4vh, 2.4rem) 0; cursor: zoom-out; }
+    .zoom-lb.open { display: block; animation: bbIn .3s ease both; }
+    .zoom-lb img { display: block; width: min(1500px, 96vw); max-height: 92vh; object-fit: contain; height: auto; margin: 0 auto; border-radius: 14px; background: transparent; }
+    .zoom-lb .x { position: fixed; top: 1.1rem; right: 1.3rem; width: 46px; height: 46px; border: 0; border-radius: 50%; background: var(--paper); color: var(--primary); display: grid; place-items: center; cursor: pointer; z-index: 2; }
+    .zoom-lb .x svg { width: 20px; height: 20px; }
+
+    /* Argentina Fuerte · desafíos: uno arriba del otro, el 2 más a la derecha que el 1 */
+    .af-cards.stag { flex-direction: column; gap: 1.2rem; align-items: flex-start; }
+    .af-cards.stag .af-card { width: clamp(300px, 30vw, 440px); }
+    .af-cards.stag .af-card:nth-child(2) { margin-left: clamp(5rem, 15vw, 14rem); }
+    .af-card .num { font-style: normal; }
+
+    /* Argentina Fuerte · galería: el título queda pegado a las imágenes */
+    .af-mock .mz-introl { width: auto; } .af-mock .mz-introl::after { display: none; } .af-mock { gap: 1.8vw; }
+    /* PetStar · bloques de presentación en zigzag, con inclinación leve */
+    .af-cards.zig { align-items: flex-start; gap: 1.6rem; }
+    .af-cards.zig .af-card { width: clamp(250px, 24vw, 340px); }
+    .af-cards.zig .af-card:nth-child(1) { margin-top: 0; }
+    .af-cards.zig .af-card:nth-child(2) { margin-top: clamp(3rem, 9vh, 6rem); background: rgba(250,250,250,.16); }
+    .af-cards.zig .af-card:nth-child(3) { margin-top: clamp(.5rem, 2vh, 1.5rem); }
+    .af-cards.zig .af-card .num { font-size: 3rem; }
+    /* Argentina Fuerte · galería compacta, todo en una pantalla */
+    .af-gal { flex: none; display: grid; grid-template-columns: 1.1fr .9fr; grid-template-rows: 1fr 1fr; gap: .9rem; width: min(64vw, calc(var(--mh) * 1.55)); height: calc(var(--mh) * .86); }
+    .af-gal img { width: 100%; height: 100%; object-fit: cover; display: block; border-radius: 22px; box-shadow: 0 14px 30px rgba(0,0,0,.28); }
+    .af-gal .g1 { grid-column: 1; grid-row: 1; } .af-gal .g3 { grid-column: 1; grid-row: 2; } .af-gal .g2 { grid-column: 2; grid-row: 1 / 3; }
+
+    /* BeBeMi · foto principal chica: Bemi recortado con el nombre escrito */
+    .bb-hero { flex: none; display: flex; align-items: flex-end; gap: 1.2rem; height: calc(var(--mh) * .5); }
+    .bb-hero .cut { height: 100%; width: auto; display: block; filter: drop-shadow(0 14px 18px rgba(0,0,0,.28)); }
+    .bb-hero .wm { width: clamp(150px, 15vw, 220px); height: auto; margin-bottom: 8%; }
+    /* DUAL */
+    .du-pers { flex: none; display: flex; gap: 1.4rem; }
+    .du-char { position: relative; width: clamp(200px, 19vw, 270px); height: calc(var(--mh) * .7); border-radius: 26px; padding: 1.6rem 1.5rem; display: flex; flex-direction: column; justify-content: flex-end; gap: .4rem; outline: none; overflow: hidden; }
+    .du-char.blanc { background: #f4f2ee; color: #202126; } .du-char.noir { background: #0d0d10; color: #fff; margin-top: 4vh; }
+    .du-char .face { width: 62%; height: auto; margin: 0 auto auto; display: block; filter: drop-shadow(0 8px 14px rgba(0,0,0,.35)); }
+    .du-char b { font-family: var(--font-title); font-size: clamp(1.6rem, 2.4vw, 2.2rem); letter-spacing: .04em; }
+    .du-char .sub { font-size: .8rem; opacity: .7; }
+    .du-char p { max-height: 0; opacity: 0; overflow: hidden; font-size: .8rem; line-height: 1.5; transition: max-height .5s ease, opacity .35s ease, margin-top .3s; }
+    .du-char .hp { position: absolute; top: 1.1rem; right: 1.1rem; }
+    .du-char.blanc .hp { --hp-bg: rgba(32,33,38,.15); --hp-fg: #202126; --hp-ring: rgba(32,33,38,.2); }
+    .du-char:focus-visible p, .du-char.open p { max-height: 14rem; opacity: 1; margin-top: .6rem; }
+    @media (hover: hover) { .du-char:hover p { max-height: 14rem; opacity: 1; margin-top: .6rem; } }
+    .du-art { flex-direction: column; } .du-art .af-card { width: clamp(240px, 21vw, 300px); }
+    .du-art .af-card:nth-child(2) { margin-left: clamp(1.5rem, 4vw, 4rem); } .du-art .af-card:nth-child(3) { margin-left: clamp(3rem, 8vw, 8rem); }
+    .dm-vals { width: clamp(220px, 20vw, 290px); } .dm-vals .mz-body { margin: 0; font-size: .82rem; }
+    .du-sb { width: min(62vw, 880px); } .du-sb .bb-sb-img { aspect-ratio: auto; width: 100%; height: calc(var(--mh) * .58); background: #fff; }
+    .du-sb .bb-sb-img img { object-fit: contain; }
+    .du-jpg { width: clamp(150px, 15vw, 220px); height: auto; display: block; margin: 0 0 1.1rem; }
+    .du-mood { flex: none; display: grid; grid-template-columns: repeat(4, clamp(86px, 8.4vw, 128px)); grid-auto-rows: clamp(120px, 15vh, 170px); gap: .7rem; }
+    .du-mood img { width: 100%; height: 100%; object-fit: cover; object-position: top; border-radius: 16px; box-shadow: 0 12px 26px rgba(0,0,0,.3); display: block; }
+    .du-mood .t1 { grid-row: span 2; } .du-mood .t5 { grid-row: span 2; }
+    .du-mood .t2 { grid-column: 2; } .du-mood .t3 { grid-column: 3; }
+    .du-vals { margin-top: 1.4rem; display: flex; flex-direction: column; gap: .55rem; } .du-vals .mz-body { margin: 0; font-size: .78rem; line-height: 1.45; }
+    .du-pers2 { flex: none; display: flex; flex-direction: column; gap: 1.6rem; width: clamp(320px, 31vw, 450px); }
+    .du-c { display: flex; align-items: center; gap: 1.3rem; }
+    .du-c img { flex: none; width: clamp(90px, 9vw, 130px); height: auto; filter: drop-shadow(0 10px 16px rgba(0,0,0,.35)); }
+    .du-c.noir { margin-left: clamp(1.5rem, 4vw, 4rem); text-align: right; }
+    .du-c b { font-family: var(--font-title); font-size: clamp(1.4rem, 2vw, 1.9rem); letter-spacing: .05em; display: block; }
+    .du-c span { display: block; font-size: .78rem; opacity: .65; margin-bottom: .5rem; }
+    .du-c p { font-size: .84rem; line-height: 1.55; opacity: .9; }
+    .af-card.du-col { background: var(--cc); color: var(--cf); } .af-card.du-col small { display: block; font-size: .72rem; opacity: .6; margin-top: .2rem; }
+    .af-card.du-col:hover, .af-card.du-col:focus-visible, .af-card.du-col.open { background: var(--cc); }
+    .af-card.du-col .hp { --hp-bg: color-mix(in srgb, var(--cf) 18%, transparent); --hp-fg: var(--cf); --hp-ring: color-mix(in srgb, var(--cf) 25%, transparent); }
+    .af-card.du-col:nth-child(1) { box-shadow: inset 0 0 0 1px rgba(0,0,0,.08); }
+    /* DUAL · personajes en cuadrados con el texto sobre la imagen */
+    .du-sq { flex: none; display: flex; gap: 1.2rem; }
+    .du-sq .sq { position: relative; width: clamp(250px, 22vw, 340px); aspect-ratio: 3 / 4; border-radius: 26px; overflow: hidden; background: #000; box-shadow: 0 16px 34px rgba(0,0,0,.35); transition: transform .5s cubic-bezier(.2,.8,.2,1), box-shadow .5s; }
+    @media (hover: hover) { .du-sq .sq:hover { transform: scale(1.05); box-shadow: 0 24px 46px rgba(0,0,0,.45); z-index: 2; } }
+    .du-sq .sq > img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; object-position: 50% 20%; display: block; }
+    .du-sq .tx { position: absolute; inset: auto 0 0 0; padding: 4.5rem 1.3rem 1.2rem; background: linear-gradient(transparent, rgba(0,0,0,.88)); color: #fff; }
+    .du-sq .tx b { font-family: var(--font-title); font-size: clamp(1.3rem, 1.9vw, 1.7rem); letter-spacing: .05em; display: block; }
+    .du-sq .tx span { display: block; font-size: .74rem; opacity: .7; margin-bottom: .45rem; }
+    .du-sq .tx p { font-size: clamp(.66rem, .82vw, .76rem); line-height: 1.45; opacity: .92; }
+    /* DUAL · rojo, blanco y negro: tríptico de paneles */
+    .du-trip { flex: none; display: grid; grid-template-columns: 1fr 1fr 1fr; width: clamp(480px, 46vw, 700px); height: calc(var(--mh) * .62); border-radius: 26px; overflow: hidden; box-shadow: 0 16px 34px rgba(0,0,0,.35); }
+    .du-trip article { background: var(--cc); color: var(--cf); padding: 1.6rem 1.3rem; display: flex; flex-direction: column; justify-content: flex-end; gap: .5rem; }
+    .du-trip small { font-size: .7rem; opacity: .6; letter-spacing: .05em; } .du-trip h3 { font-family: var(--font-title); font-size: clamp(1.2rem, 1.7vw, 1.6rem); } .du-trip p { font-size: clamp(.64rem, .8vw, .74rem); line-height: 1.5; opacity: .9; }
+    /* DUAL · texto plano (sin contenedor): título en rojo claro, texto en blanco */
+    .du-plain { flex: none; display: flex; flex-direction: column; gap: 1.3rem; width: clamp(260px, 25vw, 360px); }
+    .du-plain h4 { font-family: var(--font-body); font-weight: 600; font-size: .82rem; color: var(--sel); margin-bottom: .3rem; }
+    .du-plain p { font-size: clamp(.7rem, .88vw, .82rem); line-height: 1.55; color: #fff; }
+    .du-vids.zig { flex-direction: row; } .du-vids .af-card { width: clamp(210px, 17vw, 250px); }
+    /* DUAL · campaña transmedia */
+    .du-kit { flex: none; display: grid; grid-template-columns: repeat(4, clamp(110px, 10.5vw, 160px)); grid-auto-rows: clamp(110px, 17vh, 160px); gap: .7rem; }
+    .du-kit figure { margin: 0; overflow: hidden; border-radius: 16px; box-shadow: 0 12px 26px rgba(0,0,0,.35); } .du-kit img { width: 100%; height: 100%; object-fit: cover; display: block; transition: transform .6s ease; }
+    @media (hover: hover) { .du-kit figure:hover img { transform: scale(1.06); } }
+    .du-kit .k1, .du-kit .k4, .du-kit .k8 { grid-row: span 2; } .du-kit .k5 { grid-column: span 2; } .du-kit .k6 { grid-column: span 2; }
+    .du-poster-s { flex: none; width: clamp(150px, 15vw, 220px); } .du-poster-s img { width: 100%; height: auto; border-radius: 14px; box-shadow: 0 12px 26px rgba(0,0,0,.35); display: block; margin-top: .5rem; }
+    .du-poster-s.big { width: auto; } .du-poster-s.big img { height: calc(var(--mh) * .84); width: auto; }
+    .du-ph { flex: none; display: flex; align-items: center; gap: .9rem; height: calc(var(--mh) * .4); }
+    .du-ph img { height: 100%; width: auto; border-radius: 16px; box-shadow: 0 14px 30px rgba(0,0,0,.35); display: block; }
+    /* Galería: el título funciona como un bloque más de la grilla (sin caja visible) */
+    .du-gal { flex: none; display: grid; grid-template-columns: repeat(2, clamp(260px, 25vw, 380px)); grid-template-rows: repeat(2, clamp(190px, 32vh, 290px)); gap: .8rem; }
+    .du-gal .gt { display: flex; flex-direction: column; justify-content: center; padding: 0 .6rem; }
+    .du-gal .gt h2 { font-family: var(--font-title); font-weight: 600; font-size: clamp(1.8rem, 2.8vw, 2.6rem); line-height: 1.05; } .du-gal .gt .label { margin-top: .6rem; margin-bottom: 0; }
+    .du-gal figure { margin: 0; overflow: hidden; border-radius: 18px; box-shadow: 0 12px 26px rgba(0,0,0,.35); cursor: zoom-in; outline: none; }
+    .du-gal figure img { width: 100%; height: 100%; object-fit: cover; display: block; transition: transform .6s ease; }
+    .du-gal figure:focus-visible { box-shadow: 0 0 0 3px var(--sel); }
+    @media (hover: hover) { .du-gal figure:hover img { transform: scale(1.05); } }
+    .du-urb-unused { display: none; }
+    .du-ph figure, .du-urb figure { margin: 0; height: 100%; } .du-ph figure.a, .du-urb figure.a { height: 62%; } .du-ph figure.c, .du-urb figure.c { height: 78%; }
+    .du-ph img, .du-urb img { height: 100%; width: auto; border-radius: 16px; box-shadow: 0 14px 30px rgba(0,0,0,.35); display: block; }
+    /* Libro del guión (hojas que giran en 3D) */
+    .du-bk { flex: none; display: grid; gap: 1.2rem; justify-items: center; --pw: calc(var(--mh) * .68 * 1250 / 1760); }
+    .bk3 { position: relative; width: calc(var(--pw) * 2); height: calc(var(--mh) * .68); perspective: 2600px; transition: transform .9s cubic-bezier(.45,.05,.25,1); transform: translateX(calc(var(--pw) * -.5)); }
+    .du-bk[data-open="1"] .bk3, .du-bk[data-open="2"] .bk3 { transform: none; }
+    .du-bk[data-open="3"] .bk3 { transform: translateX(calc(var(--pw) * .5)); }
+    .bk3 .leaf { position: absolute; left: 50%; top: 0; width: var(--pw); height: 100%; transform-origin: left center; transform-style: preserve-3d; transition: transform 1s cubic-bezier(.45,.05,.25,1); cursor: pointer; }
+    .bk3 .leaf.flipped { transform: rotateY(-180deg); }
+    .bk3 .face { position: absolute; inset: 0; backface-visibility: hidden; -webkit-backface-visibility: hidden; background: #fff; overflow: hidden; }
+    .bk3 .face img { width: 100%; height: 100%; object-fit: cover; display: block; }
+    .bk3 .front { border-radius: 0 8px 8px 0; box-shadow: 0 18px 40px rgba(0,0,0,.45), inset 14px 0 18px -14px rgba(0,0,0,.4); }
+    .bk3 .back { transform: rotateY(180deg); border-radius: 8px 0 0 8px; box-shadow: inset -14px 0 18px -14px rgba(0,0,0,.4); }
+    .du-bk { position: relative; }
+    .du-bk .pv-chip { position: absolute; left: 50%; top: 42%; transform: translate(-50%, 6px); padding: .6rem 1.2rem; border-radius: 999px; background: var(--paper); color: var(--primary); font: 600 .85rem var(--font-body); opacity: 0; pointer-events: none; transition: opacity .3s ease, transform .3s ease; z-index: 20; white-space: nowrap; }
+    .du-bk.peek .pv-chip { opacity: 1; transform: translate(-50%, 0); }
+    @media (hover: none) { .du-bk .pv-chip { opacity: 1; } }
+    .du-cover { flex: none; position: relative; border: 0; background: none; padding: 0; cursor: zoom-in; outline: none; }
+    .du-cover img { display: block; height: calc(var(--mh) * .7); width: auto; border-radius: 4px 10px 10px 4px; box-shadow: -8px 0 0 -2px #111, 0 24px 44px rgba(0,0,0,.45); transition: transform .5s cubic-bezier(.2,.8,.2,1); }
+    .du-cover .pv-chip { opacity: 0; transform: translate(-50%, 6px); }
+    .du-cover:hover .pv-chip, .du-cover:focus-visible .pv-chip { opacity: 1; transform: translate(-50%, 0); }
+    .du-cover:hover img, .du-cover:focus-visible img { transform: scale(1.03); }
+    .bk-lb { position: fixed; inset: 0; z-index: 2000; background: rgba(30,4,2,.96); display: none; flex-direction: column; align-items: center; justify-content: center; gap: 1.1rem; padding: 3.4rem 1rem 1rem; }
+    .bk-lb.open { display: flex; animation: bbIn .3s ease both; }
+    .bk-lb .du-bk { --h: min(78vh, 880px); --pw: calc(var(--h) * 1250 / 1760); }
+    .bk-lb .bk3 { height: var(--h); }
+    .bk-x { position: fixed; top: 1rem; right: 1.2rem; z-index: 2; width: 44px; height: 44px; border: 0; border-radius: 50%; background: var(--paper); color: var(--primary); display: grid; place-items: center; cursor: pointer; } .bk-x svg { width: 18px; height: 18px; }
+    .bk-ctrl { display: flex; align-items: center; gap: 1rem; color: #fff; font-size: .85rem; }
+    .bk-ctrl button { width: 42px; height: 42px; border: 0; border-radius: 50%; background: var(--paper); color: var(--primary); cursor: pointer; font-size: 1.05rem; transition: background .25s, opacity .25s; } .bk-ctrl button:hover { background: var(--sel); } .bk-ctrl button:disabled { opacity: .3; cursor: default; }
+    @media (prefers-reduced-motion: reduce) { .bk3, .bk3 .leaf { transition-duration: .01s; } }
+    /* (visor antiguo del guión) */
+    .du-book { flex: none; position: relative; display: block; border: 0; background: none; cursor: pointer; perspective: 900px; outline: none; }
+    .du-book .pg { display: block; width: calc(var(--mh) * .56); aspect-ratio: 1250 / 1760; border-radius: 4px 10px 10px 4px; overflow: hidden; background: #fff; box-shadow: -8px 0 0 -2px #111, 0 24px 44px rgba(0,0,0,.45); transform: rotateY(-14deg); transform-origin: left center; transition: transform .6s cubic-bezier(.2,.8,.2,1); }
+    .du-book .pg img { width: 100%; height: 100%; object-fit: cover; display: block; }
+    .du-book .cta { position: absolute; left: 50%; bottom: -1.2rem; transform: translateX(-50%); padding: .7rem 1.4rem; border-radius: 999px; background: var(--paper); color: var(--primary); font: 600 .88rem var(--font-body); white-space: nowrap; }
+    .du-book .cta i { font-style: normal; margin-left: .5rem; }
+    .du-book:hover .pg, .du-book:focus-visible .pg { transform: rotateY(-4deg) scale(1.03); }
+    .bk-lb { position: fixed; inset: 0; z-index: 2000; background: rgba(30,4,2,.96); display: none; flex-direction: column; align-items: center; justify-content: center; gap: 1rem; padding: 3.2rem 1rem 1rem; }
+    .bk-lb.open { display: flex; animation: bbIn .3s ease both; }
+    .bk-stage { position: relative; display: flex; align-items: center; justify-content: center; gap: 0; height: min(84vh, 1100px); perspective: 2000px; }
+    .bk-page { height: 100%; aspect-ratio: 1250 / 1760; background: #fff; box-shadow: 0 20px 50px rgba(0,0,0,.5); overflow: hidden; }
+    .bk-page img { width: 100%; height: 100%; object-fit: cover; display: block; }
+    .bk-page.l { border-radius: 8px 0 0 8px; box-shadow: inset -22px 0 24px -20px rgba(0,0,0,.45), 0 20px 50px rgba(0,0,0,.5); transform-origin: right center; }
+    .bk-page.r { border-radius: 0 8px 8px 0; box-shadow: inset 22px 0 24px -20px rgba(0,0,0,.45), 0 20px 50px rgba(0,0,0,.5); transform-origin: left center; }
+    .bk-page.empty { background: transparent; box-shadow: none; }
+    .bk-stage.flip-n .bk-page.r { animation: bkN .45s ease both; } .bk-stage.flip-p .bk-page.l { animation: bkP .45s ease both; }
+    @keyframes bkN { from { transform: rotateY(70deg); opacity: .3; } to { transform: none; opacity: 1; } }
+    @keyframes bkP { from { transform: rotateY(-70deg); opacity: .3; } to { transform: none; opacity: 1; } }
+    .bk-nav { display: flex; align-items: center; gap: 1rem; color: #fff; font-size: .85rem; }
+    .bk-nav button, .bk-x { border: 0; border-radius: 50%; background: var(--paper); color: var(--primary); width: 44px; height: 44px; cursor: pointer; display: grid; place-items: center; font-size: 1.1rem; transition: background .25s, opacity .25s; }
+    .bk-nav button:hover, .bk-x:hover { background: var(--sel); } .bk-nav button:disabled { opacity: .3; cursor: default; }
+    .bk-x { position: fixed; top: 1rem; right: 1.2rem; z-index: 2; } .bk-x svg { width: 18px; height: 18px; }
+    @media (max-width: 800px) { .bk-page.l { display: none; } .bk-page.r { border-radius: 8px; } }
+    /* Nombre del plano al pasar el mouse por su número */
+    .dm-nav { position: relative; }
+    .dm-nav button { position: relative; }
+    /* Las marcas: Dr. Martens más arriba, The Great Frog más abajo (desfase leve pero notorio) */
+    .dm-row > .dm-tile:nth-child(1) { translate: 0 -4.5vh; } .dm-row > .dm-tile:nth-child(2) { translate: 0 4.5vh; }
+    /* Logos en las tarjetas de las marcas */
+    .dm-tile .ttl { display: grid; place-items: center; padding: 4rem 1.2rem 1rem; background: linear-gradient(transparent, rgba(0,0,0,.94) 55%); }
+    .dm-tile .ttl .lg { display: block; width: auto; max-width: 78%; max-height: 3.6rem; height: auto; }
+    .dm-tile .txt .lg { width: auto; max-width: 70%; max-height: 3rem; height: auto; margin-bottom: .9rem; align-self: flex-start; }
+    /* Mini reproductor de Spotify */
+    .dm-sound { flex: none; width: clamp(280px, 27vw, 400px); display: flex; flex-direction: column; gap: 1rem; }
+    .dm-spot { display: block; width: 100%; height: 80px; border: 0; border-radius: 14px; background: #121212; }
+    .dm-spot.mini { display: grid; grid-template-columns: auto 1fr; grid-template-rows: auto auto; align-items: center; gap: .15rem .9rem; padding: .8rem 1rem; color: #fff; text-decoration: none; }
+    .dm-spot.mini .pl { grid-row: 1 / 3; width: 2.8rem; height: 2.8rem; border-radius: 50%; background: #1ed760; position: relative; }
+    .dm-spot.mini .pl::after { content: ""; position: absolute; left: 54%; top: 50%; transform: translate(-50%, -50%); border-left: .8rem solid #000; border-top: .5rem solid transparent; border-bottom: .5rem solid transparent; }
+    .dm-spot.mini .tt { font-size: .78rem; opacity: .85; line-height: 1.3; } .dm-spot.mini .tt b { display: block; font-size: .92rem; }
+    .dm-spot.mini .bar { height: 3px; border-radius: 2px; background: rgba(255,255,255,.25); } .dm-spot.mini .bar i { display: block; width: 0; height: 100%; background: #fff; transition: width .6s; }
+    .dm-spot.mini:hover .bar i, .dm-spot.mini:focus-visible .bar i { width: 35%; } .dm-spot.mini:focus-visible { outline: 2px solid var(--sel); }
+    .dm-soon-wrap { display: contents; }
+    .p-proto iframe { width: 100%; height: 100%; border: 0; display: block; }
+    /* Dr. Martens · tarjetas con imagen: el texto sale con el hover */
+    .dm-row { flex: none; display: flex; gap: 1.3rem; align-items: center; }
+    .dm-tile { position: relative; flex: none; width: var(--w); height: calc(var(--mh) * .7); border-radius: 24px; overflow: hidden; background: #000; box-shadow: 0 18px 40px rgba(0,0,0,.3); outline: none; }
+    .dm-tile > img { width: 100%; height: 100%; object-fit: cover; display: block; }
+    .dm-tile .vis { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; gap: .5rem; background: #000; }
+    .dm-tile .vis.pal i { display: block; width: calc(var(--k) * 3.1rem); aspect-ratio: 1; border-radius: 50%; box-shadow: 0 0 0 2px rgba(250,250,250,.22); }
+    .dm-tile .vis.typ { overflow: hidden; } .dm-tile .vis.typ img { width: 150%; max-width: none; height: auto; display: block; transform: rotate(-4deg); }
+    .dm-tile .ttl { position: absolute; left: 0; right: 0; bottom: 0; padding: 3rem 1.2rem 1.1rem; background: linear-gradient(transparent, rgba(0,0,0,.88)); font-family: var(--font-title); font-weight: 600; font-size: clamp(1rem, 1.3vw, 1.2rem); transition: opacity .3s; }
+    .dm-tile .txt { position: absolute; inset: 0; display: flex; flex-direction: column; justify-content: center; padding: 1.3rem 1.3rem 1.6rem; background: rgba(40,6,3,.95); font-size: clamp(.68rem, min(.88vw, 1.7vh), .84rem); line-height: 1.5; opacity: 0; transition: opacity .35s ease; overflow: auto; }
+    .dm-tile .txt b { font-family: var(--font-title); font-size: 1.15rem; font-weight: 600; margin-bottom: .6rem; }
+    .dm-tile .hp { position: absolute; top: 1rem; right: 1rem; z-index: 2; }
+    .dm-tile:focus-visible .txt, .dm-tile.open .txt { opacity: 1; }
+    .dm-tile:focus-visible .ttl, .dm-tile.open .ttl { opacity: 0; }
+    @media (hover: hover) { .dm-tile:hover .txt { opacity: 1; } .dm-tile:hover .ttl { opacity: 0; } }
+    /* Dr. Martens · video final pendiente */
+    /* Reproductor de YouTube simple: imagen + play; el reproductor se carga al tocar */
+    .yt { position: absolute; inset: 0; background: #000; }
+    .yt img { width: 100%; height: 100%; object-fit: cover; display: block; }
+    .yt iframe { width: 100%; height: 100%; border: 0; display: block; }
+    .yt-play { position: absolute; left: 50%; top: 50%; width: 76px; height: 76px; transform: translate(-50%, -50%); border: 0; border-radius: 50%; background: var(--paper); cursor: pointer; transition: transform .3s cubic-bezier(.2,.8,.2,1), background .3s; }
+    .yt-play::after { content: ""; position: absolute; left: 54%; top: 50%; transform: translate(-50%, -50%); border-left: 22px solid var(--primary); border-top: 14px solid transparent; border-bottom: 14px solid transparent; }
+    .yt-play:hover, .yt-play:focus-visible { transform: translate(-50%, -50%) scale(1.08); background: var(--sel); outline: none; }
+    /* PetStar · UI Kit */
+    .ps-type > div { margin-top: .8rem; } .ps-type small { display: block; font: 400 .72rem var(--font-body); opacity: .75; margin-bottom: .2rem; } .ps-type b { font-size: clamp(1.4rem, 2.2vw, 2rem); font-weight: 700; }
+    .dm-soon { width: 100%; height: 100%; object-fit: cover; display: block; filter: brightness(.55); }
+    .dm-soon-chip { position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%); padding: .7rem 1.4rem; border-radius: 999px; background: rgba(250,250,250,.92); color: var(--primary); font-weight: 600; font-size: .9rem; }
+    @keyframes bbIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
+
+    /* Argentina Fuerte · caso aplicado: texto + vista previa del Instagram (marco con "clic para interactuar", como el prototipo) */
+    .af-case .af-case-txt { flex: none; width: clamp(300px, 34vw, 520px); }
+    .af-case .frame.af-ig { width: min(420px, 80vw); height: min(var(--mh), 700px); border-radius: 28px; background: #fff; box-shadow: 0 18px 40px rgba(0,0,0,.28); flex: none; }
+    .af-ig-link { display: inline-flex; align-items: center; gap: .6rem; margin-top: 1.6rem; padding: .7rem 1.3rem; border-radius: 999px; background: rgba(250,250,250,.12); color: var(--paper); font-size: .88rem; text-decoration: none; transition: background .3s, transform .3s; }
+    .af-ig-link:hover, .af-ig-link:focus-visible { background: rgba(250,250,250,.24); transform: translateX(3px); outline: none; }
+    .af-ig-link i { font-style: normal; }
+
+    /* Argentina Fuerte (mismo formato que Mesa) */
+    .af-img { flex: none; display: block; height: var(--h, calc(var(--mh) * .62)); width: auto; max-width: none; border-radius: 24px; box-shadow: 0 18px 40px rgba(0,0,0,.28); }
+    .af-main { width: 100%; height: auto; aspect-ratio: 1388 / 731; object-fit: cover; box-shadow: none; }
+    .af-row { flex: none; display: flex; gap: 1.4rem; align-items: center; }
+    .af-cards { flex: none; display: flex; gap: 1.4rem; align-items: stretch; }
+    .af-card { width: clamp(260px, 26vw, 400px); background: rgba(250,250,250,.1); border-radius: 28px; padding: 1.8rem 2rem 2.1rem; display: flex; flex-direction: column; gap: .9rem; }
+    .af-card .num { font-family: var(--font-title); font-size: 2.4rem; line-height: 1; color: rgba(250,250,250,.4); }
+    .af-card h3 { font-family: var(--font-title); font-weight: 600; font-size: clamp(1.1rem, 1.6vw, 1.45rem); line-height: 1.2; }
+
+    .af-card p { font-size: clamp(.8rem, 1vw, .92rem); line-height: 1.6; opacity: .88; }
+    .af-grp { flex: none; display: flex; flex-direction: column; gap: 1rem; }
+    .af-t { font-family: var(--font-title); font-weight: 600; font-size: clamp(1.1rem, 1.5vw, 1.35rem); color: var(--sel); }
+    .af-stack { flex: none; display: flex; flex-direction: column; gap: clamp(1rem, 3vh, 1.8rem); }
+    .af-chal { flex: none; display: flex; flex-direction: column; gap: 1rem; }
+    .mz-ficha .mz-progs { margin-top: 0; align-self: auto; }
+    /* Tipografías y paleta */
+    .af-spec { flex: none; display: grid; grid-template-columns: auto auto; gap: clamp(2rem, 4vw, 4rem); align-items: start; align-content: center; height: var(--mh); }
+    .af-box { background: rgba(250,250,250,.09); border-radius: 28px; padding: 1.8rem 2.2rem 2.2rem; }
+    .af-box > .label { margin-bottom: 1.2rem; }
+    .af-ty { display: flex; flex-direction: column; gap: 1.6rem; min-width: clamp(300px, 30vw, 440px); }
+    .af-ty b { display: block; font-size: clamp(1.1rem, 1.6vw, 1.45rem); margin-bottom: .45rem; font-weight: 700; }
+    .af-ty .b { font-family: 'Libre Baskerville', Georgia, serif; }
+    .af-ty .g { font-family: 'Questrial', 'Century Gothic', 'URW Gothic', sans-serif; font-weight: 400; }
+    .af-ty .g.bold b { font-weight: 700; }
+    .af-ty span { display: block; font-size: .82rem; line-height: 1.55; letter-spacing: .08em; opacity: .85; word-break: break-all; }
+    .af-pal { display: flex; flex-direction: column; gap: 1.5rem; }
+    .af-pal h5 { font-size: .78rem; font-weight: 600; color: var(--sel); margin-bottom: .7rem; }
+    .af-sw { display: flex; gap: .8rem; flex-wrap: wrap; align-items: flex-end; }
+    .af-sw i { font-style: normal; display: grid; place-items: center; width: var(--sz); aspect-ratio: 1; border-radius: 22px; font-size: .74rem; font-weight: 600; letter-spacing: .02em; }
+    .af-sw.lg { --sz: clamp(84px, 7.6vw, 112px); }
+    .af-sw.md { --sz: clamp(64px, 5.8vw, 86px); }
+    .af-sw.md i { border-radius: 18px; font-size: .68rem; }
+    .af-sw.sm { --sz: clamp(48px, 4.4vw, 64px); }
+    .af-sw.sm i { border-radius: 14px; font-size: .56rem; }
+    @media (max-width: 900px), (max-aspect-ratio: 1/1) {
+      .af-img { --h: 46vh; }
+      .af-main { height: auto; }
+      .af-card { width: 76vw; }
+      .af-chal-col { width: 76vw; }
+      .af-spec { grid-template-columns: 1fr; width: 84vw; height: auto; padding-top: calc(var(--header-h) + 1rem); }
+    }
+    .mz-testcol { flex: none; width: clamp(560px, 62vw, 940px); }
+    .mz-tabs { display: grid; grid-template-columns: 1fr 1fr; gap: clamp(1.4rem, 3.6vh, 2.4rem) clamp(1.6rem, 3vw, 2.8rem); align-items: start; }
+    .mz-box { background: var(--paper); color: #2B1411; border-radius: 26px; padding: clamp(1rem, 2.2vh, 1.5rem) clamp(1.1rem, 1.8vw, 1.6rem); box-shadow: 0 14px 32px rgba(0,0,0,.25); }
+    .mz-eff { grid-column: 1 / -1; }
+    .mz-tab-bar { background: var(--primary); color: var(--paper); border-radius: 999px; padding: .32rem 1rem; font-weight: 700; font-size: .72rem; margin-bottom: clamp(.7rem, 1.8vh, 1.1rem); }
+    .mz-eff-in { display: grid; grid-template-columns: 1fr 1fr; gap: clamp(1.2rem, 2.4vw, 2.4rem); }
+    .mz-box .sub { display: block; font-size: .66rem; color: #C0453A; font-weight: 600; margin-bottom: .3rem; }
+    .mz-tab table { width: 100%; border-collapse: collapse; font-size: clamp(.55rem, 1.3vh, .7rem); text-align: center; }
+    .mz-tab thead th { color: #C0453A; font-weight: 600; padding: .3rem 0; }
+    .mz-tab tbody th { text-align: left; font-weight: 400; padding: .2rem 0; }
+    .mz-tab tbody th span { display: inline-block; background: var(--primary); color: var(--paper); border-radius: 999px; padding: .14rem .65rem; font-size: .92em; }
+    .mz-tab td { padding: .3rem 0; color: #3A2A27; }
+    .mz-tab td.avg { font-weight: 700; color: #000; }
+    .mz-analisis { padding: .2rem .4rem 0 .6rem; align-self: center; }
+    .mz-analisis .mz-lead { font-size: clamp(.85rem, min(1.2vw, 2.2vh), 1.15rem); line-height: 1.45; }
+
+    /* 05 Prototipo final */
+    .mz-protosec { gap: 0; }
+    .mz-protosec .frame { width: min(72vw, 1180px); height: min(60vh, 620px); }
+
+    /* Botón sutil "Ver proyecto" en la portada de Mesa */
+    .ver-proy { align-self: flex-start; display: inline-flex; align-items: center; gap: .6rem; margin-top: .4rem; padding: .5rem 1.05rem; border-radius: 999px; background: rgba(250,250,250,.12); color: var(--paper); font-size: .82rem; text-decoration: none; transition: background .3s, transform .3s; }
+    .ver-proy:hover, .ver-proy:focus-visible { background: rgba(250,250,250,.24); transform: translateX(3px); }
+    .ver-proy i { font-style: normal; transition: transform .3s; }
+    .ver-proy:hover i { transform: translateX(4px); }
+
+    /* Mesa en pantallas angostas */
+    @media (max-width: 768px), (max-aspect-ratio: 1/1) {
+      .mz { padding-right: 6vw; gap: 8vw; }
+      .mz-desc { width: 78vw; }
+      .mz-screens { width: 120vw; }
+      .mz-ficha { padding-left: 6vw; }
+      .mz-introl { width: 78vw; }
+      .mz-intror { grid-template-columns: 74vw 80vw; }
+      .mz-brandcol { width: 120vw; }
+      .mz-dtxt, .mz-3 { width: 78vw; }
+      .mz-stages { width: 120vw; }
+      .mz-col { width: 80vw; }
+      .mz-persona { --W: 88vw; }
+      .mz-persona .pl { width: 100%; }
+      .mz-persona .pl img { max-width: 52%; }
+      .mz-persona .pc { left: 0; right: 0; top: auto !important; bottom: 0 !important; height: 62%; width: 100% !important; transition: height .5s cubic-bezier(.2,.8,.2,1); overflow-y: auto; }
+      .mz-persona .pc.open, .mz-persona .pc:focus-visible { height: 100%; }
+      .mz-persona .pc-in { width: 100%; position: relative; inset: auto; grid-template-columns: 1fr; padding: .9rem 1.1rem 1.2rem; }
+      .mz-persona .pc-main { padding-bottom: 1.8em; }
+      @media (hover: hover) { .mz-persona .pc:hover { height: 100%; } }
+      .mz-bench .bc[aria-expanded="true"] .bc-more-in { max-height: calc(100vh - 580px); }
+      .mz-reqs { flex-direction: column; align-items: flex-start; justify-content: center; gap: 1.2rem; padding-top: calc(var(--header-h) + 1vh); }
+      .mz-reqhead { align-self: flex-start; width: 80vw; }
+      .mz-reqhead .mz-head { display: flex; align-items: baseline; gap: .9rem; }
+      .mz-reqhead .mz-head .n { margin-bottom: 0; font-size: 3rem; }
+      .mz-stack { width: 86vw; align-self: flex-start; }
+      .mz-stack .rq { width: 74vw; margin-left: calc(var(--i) * 2.4vw); font-size: .82rem; }
+      .mz-testcol { width: 92vw; }
+      .mz-tests { padding-top: calc(var(--header-h) + 1.2rem); padding-bottom: 3.5rem; max-height: 100vh; overflow-y: auto; align-self: flex-start; }
+      .mz-tabs { grid-template-columns: 1fr; }
+      .mz-eff-in { grid-template-columns: 1fr; }
+      .mz-protosec .frame { width: 86vw; height: 58vh; }
+      .mz-protosec .frame.bb-vid { height: auto; }
+      .bb-sb.dm-sb { grid-template-columns: 78vw; gap: 1.4rem; }
+      .dm-tile { --w: 70vw !important; height: 58vh; }
+    }
+
+    /* ---- Prototipo de Figma (solo Proyecto 1) ---- */
+    .p-proto .frame {
+      position: relative;
+      width: min(68vw, 1100px);
+      height: min(70vh, 660px);
+      border-radius: 14px;
+      overflow: hidden;
+      background: var(--primary-deep);
+    }
+    .p-proto iframe { width: 100%; height: 100%; border: 0; display: block; }
+    .p-proto .shield {
+      position: absolute; inset: 0; z-index: 2; cursor: pointer;
+      display: flex; align-items: flex-end; justify-content: center; padding-bottom: 1.2rem;
+      background: transparent; border: 0; color: #fff;
+      font: 400 0.9rem var(--font-body);
+    }
+    .p-proto .shield span { background: rgba(63,10,5,.82); padding: .5rem 1rem; border-radius: 999px; }
+    .p-proto .frame.active .shield { display: none; }
+
+    /* Tramo vacío entre proyectos: ahí se ven las dos formas rojas enfrentadas */
+    .p-bridge { width: 115vw; padding: 0; }   /* largo suficiente para que la forma roja de un proyecto se retire entera antes de que entre la del siguiente */
+
+    /* ---- Panel final: contacto ---- */
+    .p-contact { width: 100vw; justify-content: center; gap: 11vw; padding: 0 var(--pad) 36px; }
+    .ct-head { flex: none; max-width: 30vw; }
+    .ct-head h2 {
+      font-family: var(--font-title);
+      font-style: italic;
+      font-weight: 400;
+      font-size: clamp(2.6rem, 6.4vw, 6rem);
+      line-height: 1;
+      margin-bottom: 2.2rem;
+    }
+    .ct-head p { font-size: 0.95rem; line-height: 1.6; opacity: 0.8; max-width: 30ch; }
+
+/* ---- Formulario de contacto (compartido) ---- */
+.ct-form { flex: none; width: min(560px, 88vw); display: flex; flex-direction: column; gap: 1.5rem; background: rgba(250,250,250,.07); border-radius: 32px; padding: clamp(1.5rem, 2.6vw, 2.4rem); }
+.ct-form .ct-chips { border: 0; display: flex; flex-wrap: wrap; gap: .55rem; }
+.ct-form .ct-chips legend { font-size: .8rem; color: var(--sel); margin-bottom: .8rem; padding: 0; }
+.ct-chip { cursor: pointer; }
+.ct-chip input { position: absolute; opacity: 0; pointer-events: none; }
+.ct-chip span { display: inline-block; padding: .5rem 1rem; border-radius: 999px; background: rgba(250,250,250,.12); color: var(--paper); font-size: .84rem; transition: background .25s, color .25s, transform .25s; }
+.ct-chip:hover span { background: rgba(250,250,250,.22); }
+.ct-chip input:checked + span { background: var(--paper); color: var(--primary); font-weight: 600; transform: translateY(-1px); }
+.ct-chip input:focus-visible + span { outline: 2px solid var(--sel); outline-offset: 2px; }
+.ct-row { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
+.ct-f { display: flex; flex-direction: column; gap: .5rem; min-width: 0; }
+.ct-f > span { font-size: .8rem; color: var(--sel); }
+.ct-f input, .ct-f textarea { width: 100%; font: 400 .95rem var(--font-body); color: var(--paper); background: rgba(250,250,250,.12); border: 0; border-radius: 16px; padding: 1rem 1.15rem; outline: none; resize: none; transition: background .3s; }
+.ct-f textarea { min-height: 8.5rem; }
+.ct-f input::placeholder, .ct-f textarea::placeholder { color: rgba(250,250,250,.45); }
+.ct-f input:hover, .ct-f textarea:hover { background: rgba(250,250,250,.16); }
+.ct-f input:focus, .ct-f textarea:focus { background: rgba(250,250,250,.24); }
+.ct-honey { position: absolute; left: -9999px; width: 1px; height: 1px; opacity: 0; }
+.ct-foot { display: flex; align-items: center; gap: 1.2rem; flex-wrap: wrap; }
+.ct-send { display: inline-flex; align-items: center; gap: .8rem; font: 600 .92rem var(--font-body); color: var(--primary); background: var(--paper); border: 0; border-radius: 999px; padding: 1rem 1.7rem; cursor: pointer; transition: background .3s, color .3s, transform .3s cubic-bezier(.2,.8,.2,1); }
+.ct-send i { font-style: normal; transition: transform .3s; }
+.ct-send:hover, .ct-send:focus-visible { background: var(--sel); color: var(--primary-deep); transform: translateY(-2px); outline: none; }
+.ct-send:hover i { transform: translateX(4px); }
+.ct-send:disabled { opacity: .6; cursor: progress; transform: none; }
+.ct-msg { flex: 1; min-width: 12ch; min-height: 1.2em; font-size: .85rem; line-height: 1.4; color: var(--sel); }
+.ct-msg.ok { color: #BFE8C9; }
+.ct-msg.err { color: #FFC9C2; }
+@media (max-width: 560px) { .ct-row { grid-template-columns: 1fr; } }
+
+    /* ==========================================================================
+       7. RESPONSIVO
+       ========================================================================== */
+    @media (max-width: 768px) {
+      header { padding: 0 1.2rem; }
+      header .logo { font-size: 1.2rem; }
+      nav ul { gap: 1rem; }
+      nav a { font-size: 0.72rem; }
+      :root { --header-h: 104px; }
+      header { align-items: flex-start; padding-top: 18px; }
+      .idx { top: auto; bottom: 8px; max-width: 90vw; overflow-x: auto; scrollbar-width: none; }
+      .idx::-webkit-scrollbar { display: none; }
+      .idx a { padding: 0.35rem 0.5rem; }
+      nav ul { align-items: center; }
+      .p-contact { flex-direction: column; align-items: flex-start; justify-content: center; gap: 1.6rem; }
+      .ct-head { max-width: 84vw; }
+      .ct-head h2 { font-size: clamp(2.4rem, 12vw, 3.4rem); margin-bottom: 1.2rem; }
+      .p-desc .block { width: 74vw; }
+      .fields { grid-template-columns: repeat(2, minmax(120px, 38vw)); }
+      .step { width: 62vw; }
+      :root { --ps: min(24vh, 38vw); }
+    }
+
+    /* Pantallas verticales: el círculo arriba a la izquierda, texto debajo */
+    @media (max-aspect-ratio: 1/1) {
+      :root { --hero-d: min(66vw, 40vh); --band-left: 6vw; --hr: min(38vh, 42.3vw); }
+      .hero-circle { top: calc(var(--header-h) + 8vh); margin-top: 0; }
+      .p-hero { padding: calc(var(--header-h) + 8vh + var(--hero-d) + 5vh) 8vw 0 8vw; align-items: flex-start; }
+      .hero-text { max-width: 66vw; }
+      .hero-title { font-size: clamp(2rem, 9vw, 3.4rem); }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      .reveal { transition-duration: 0.01s; transition-delay: 0s; }
+      .hero-circle .disc { animation: none; }
+      #red-shape.settling { transition-duration: 0.01s; }
+    }
+  </style>
+</head>
+<body class="on-red">
+
+  <!-- Forma roja (banda con medio círculo a la derecha) -->
+  <div id="red-shape" aria-hidden="true"></div>
+  <!-- Segunda forma: el principio del proyecto siguiente, que entra mientras la anterior se retira -->
+  <div id="red-shape-b" aria-hidden="true"></div>
+
+  <!-- NAVEGACIÓN: logo · índice de proyectos · menú + cruz -->
+  <header>
+    <a class="brand" href="index.html"><span class="logo">Melaza Studio</span><span class="tagline">Estudio creativo</span></a>
+    <nav class="idx" id="idx" aria-label="Índice de proyectos"></nav>
+    <nav>
+        <ul>
+          <li><a href="sobre-mi.html">Sobre mí</a></li>
+          <li><a href="contacto.html">Contacto</a></li>
+          <li><a class="close" id="close" href="index.html" aria-label="Volver a la Home">
+            <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" aria-hidden="true"><path d="M2 2l12 12M14 2L2 14"/></svg>
+          </a></li>
+        </ul>
+      </nav>
+  </header>
+
+  <!-- Círculos principales (uno por proyecto): salen hacia la izquierda con el scroll -->
+  <div id="hero-layer" aria-hidden="true"></div>
+
+  <!-- Contenido horizontal (se arma desde proyectos.js) -->
+  <main id="scroller" tabindex="0">
+    <div class="track" id="track"></div>
+  </main>
+
+  <div id="progress"><i></i></div>
+
+  <!-- Indicación de scroll: aparece al entrar y se va apenas el usuario empieza a moverse -->
+  <div id="scroll-hint" aria-hidden="true"><span id="hint-text">Scrolleá para explorar el proyecto</span><i></i></div>
+
+  <script src="proyectos.js"></script>
+  <script src="mesa-contenido.js"></script>
+  <script src="argentina-contenido.js"></script>
+  <script src="petstar-contenido.js"></script>
+  <script src="bebemi-contenido.js"></script>
+  <script src="dm-contenido.js"></script>
+  <script src="dual-contenido.js"></script>
+  <script src="proyectos-final.js"></script>
+  <script>
+    /* ==========================================================================
+       PLANTILLA DE TRABAJO
+       Lee ?id=N de la URL, busca el trabajo en PROJECTS y arma los paneles.
+       ========================================================================== */
+    // Proyecto de arranque: #pN, ?id=N (viene de la Home) o #contacto
+    const params = new URLSearchParams(location.search);
+    const hashId = parseInt((location.hash.match(/^#p(\d+)$/) || [])[1], 10);
+    const startId = hashId || parseInt(params.get('id'), 10) || 1;
+    const startIdx = Math.max(0, PROJECTS.findIndex(p => p.id === startId));
+    document.title = `${PROJECTS[startIdx].name} — Melaza Studio`;
+
+    const scroller = document.getElementById('scroller');
+    const track = document.getElementById('track');
+    const progressEl = document.getElementById('progress');
+    const progressBar = document.querySelector('#progress i');
+    const hintEl = document.getElementById('scroll-hint');
+    if (matchMedia('(hover: none)').matches) document.getElementById('hint-text').textContent = 'Deslizá horizontalmente para explorar el proyecto';
+    const shape = document.getElementById('red-shape');
+    const shapeB = document.getElementById('red-shape-b');
+
+    /* ----- Helpers de armado ----- */
+
+    // Círculo de foto: si hay ruta de imagen la muestra, si no queda blanco vacío con etiqueta
+    const photo = (src, size, n, extra = '') => `
+      <div class="ph" style="--s:${size};${extra}" data-label="Imagen ${String(n).padStart(2, '0')}">${src ? `<img src="${src}" alt="">` : ''}</div>`;
+
+    // Recuadro cuadrado con la indicación de la imagen que debe ir ahí
+    const noteImg = (text, size, n) => `
+      <div class="ph sq note-img" style="--s:${size}"><b>Imagen ${n}</b><span>${text}</span></div>`;
+
+    /* ----- Paneles de un proyecto ----- */
+    function buildPanels(project) {
+    const panels = [];
+
+    // 1. Título (el círculo principal es la capa fija de la izquierda)
+    panels.push(`
+      <section class="panel p-hero">
+        <div class="hero-text">
+          <span class="hero-num reveal" style="--d:.8s">${project.number}</span>
+          ${project.logo
+            ? `<h1 class="hero-title hero-logo${project.logoKeep ? ' keep' : ''} reveal" style="--d:.95s"><img src="${project.logo}" alt="${project.name}"></h1>`
+            : project.heroTitle
+              ? `<h1 class="hero-title hero-bask reveal" style="--d:.95s" aria-label="${project.name}">${project.heroTitle.join('<br>')}</h1>`
+              : `<h1 class="hero-title reveal" style="--d:.95s">${project.name}</h1>`}
+          <span class="tag reveal" style="--d:1.1s">${project.category}</span>
+          ${project.protoId ? `<a class="ver-proy reveal" style="--d:1.25s" href="#${project.protoId}" data-goto="${project.protoId}">Ver proyecto final <i>→</i></a>` : ''}
+        </div>
+      </section>`);
+
+    // 2. Descripción general + foto
+    panels.push(`
+      <section class="panel p-desc">
+        <div class="block reveal">
+          <span class="label">Descripción general</span>
+          <p class="lead">${project.description}</p>
+        </div>
+        <div class="reveal" style="--d:.15s">${project.descImage ? noteImg(project.descImage, 'min(52vh, 34vw)', '02') : photo(project.images[1], 'min(52vh, 34vw)', 2).replace('class="ph"', 'class="ph sq"')}</div>
+      </section>`);
+
+    // 3. Datos: categoría, año, cliente, rol, duración y programas
+    const toolsHtml = project.tools.map(key => {
+      const t = TOOLS[key];
+      return `<div class="tool"><div class="ico" role="img" aria-label="${t.name}" style="--img:url('${t.image}')"></div><span>${t.name}</span></div>`;
+    }).join('');
+
+    panels.push(`
+      <section class="panel p-data">
+        <dl class="fields">
+          <div class="field reveal"><dt class="label">Categoría</dt><dd>${project.category}</dd></div>
+          <div class="field reveal" style="--d:.08s"><dt class="label">Año</dt><dd>${project.year}</dd></div>
+          <div class="field reveal" style="--d:.16s"><dt class="label">Cliente</dt><dd>${project.client}</dd></div>
+          <div class="field reveal" style="--d:.24s"><dt class="label">Rol</dt><dd>${project.role}</dd></div>
+          <div class="field reveal" style="--d:.32s"><dt class="label">Duración</dt><dd>${project.duration}</dd></div>
+          <div class="field wide reveal" style="--d:.4s"><dt class="label">Programas utilizados</dt><dd class="tools">${toolsHtml}</dd></div>
+          ${project.tags ? `<div class="field wide reveal" style="--d:.48s"><dt class="label">Etiquetas</dt><dd class="tagrow">${project.tags.map(t => `<span class="chip">${t}</span>`).join('')}</dd></div>` : ''}
+        </dl>
+      </section>`);
+
+    // 4. Proceso: cada etapa (con texto que se despliega) + 2 imágenes con su texto
+    const stagesHtml = project.process.map((s, i) => `
+      <div class="stage reveal" style="--d:${0.1 + i * 0.1}s">
+        <div class="step hv" tabindex="0">
+          <i class="hp lt" aria-hidden="true" style="position:absolute;top:1.2rem;right:1.2rem"></i>
+          <span class="n">${String(i + 1).padStart(2, '0')}</span>
+          <h3>${s.title}</h3>
+          <p>${s.text}</p>
+          <div class="more"><p>${s.more}</p></div>
+        </div>
+        <div class="pair">
+          ${s.images.map((im, k) => `
+          <figure>
+            ${photo(im.src, 'var(--ps)', `${i + 1}.${k + 1}`)}
+            <figcaption>${im.caption}</figcaption>
+          </figure>`).join('')}
+        </div>
+      </div>`).join('');
+
+    panels.push(`
+      <section class="panel p-process">
+        <div>
+          <span class="label reveal">Proceso</span>
+          <div class="stages">${stagesHtml}</div>
+        </div>
+      </section>`);
+
+    // 5. UI Kit
+    panels.push(`
+      <section class="panel p-uikit">
+        <div class="reveal">
+          <span class="label">UI Kit</span>
+          <div class="uikit" data-label="Imagen">${project.uiKit ? `<img src="${project.uiKit}" alt="UI Kit">` : ''}</div>
+        </div>
+      </section>`);
+
+    // 5b. Prototipo de Figma (solo si el trabajo lo tiene)
+    if (project.prototype) {
+      const src = project.prototype.replace('://www.figma.com/', '://embed.figma.com/') + '&embed-host=share';
+      panels.push(`
+      <section class="panel p-proto">
+        <div class="reveal">
+          <span class="label">Prototipo</span>
+          <div class="frame" id="proto-frame">
+            <iframe src="${src}" title="Prototipo de Figma" allowfullscreen loading="lazy"></iframe>
+            <button class="shield" type="button"><span>Hacer clic para interactuar</span></button>
+          </div>
+        </div>
+      </section>`);
+    }
+
+    // 6. Grilla de imágenes: 2 círculos por columna
+    // Galería final: 6 imágenes en 3 columnas de 2, alternando grande / chica
+    const gallery = project.gallery || [];
+    if (gallery.length) {
+      // Cada columna: [tamaño, sangría] por imagen (en múltiplos de --gl) y desplazamiento vertical
+      const layout = [
+        { w: 1.35, y: '-7vh', items: [[1.1, 0],   [0.5, 0.85]] },
+        { w: 1.0,  y: '9vh',  items: [[0.62, 0.3], [1.0, 0]]   },
+        { w: 1.2,  y: '-4vh', items: [[0.9, 0.1],  [0.55, 0.65]] }
+      ];
+      const cols = layout.map((col, c) => {
+        const cells = col.items.map(([sz, ml], k) => {
+          const i = c * 2 + k;
+          return photo(gallery[i], `calc(var(--gl) * ${sz})`, i + 3, `--ml:${ml}`);
+        }).join('');
+        return `<div class="gal-col reveal" style="--w:${col.w};--y:${col.y};--d:${c * 0.12}s">${cells}</div>`;
+      });
+      panels.push(`<section class="panel p-gallery"><div class="gal-grid">${cols.join('')}</div></section>`);
+    }
+
+    // Mesa: interior con diseño propio (conserva portada, descripción y datos)
+    if (project.mesaPanels) {
+      panels.length = 1;                       // solo la portada: lo demás lo arma Mesa
+      project.mesaPanels().forEach(h => panels.push(h));
+    }
+
+    // Caso de estudio extenso: reemplaza proceso / UI Kit / galería por las secciones del proyecto
+    if (project.sections) {
+      panels.length = 3;                       // conserva portada, descripción y datos
+      let imgN = 3;
+      const blockHtml = b => {
+        switch (b.t) {
+          case 'lead':  return `<p class="lead">${b.x}</p>`;
+          case 'p':     return `<p>${b.x}</p>`;
+          case 'h':     return `<span class="h">${b.x}</span>`;
+          case 'note':  return `<p class="note">${b.x}</p>`;
+          case 'quote': return `<p class="quote">${b.x}</p>`;
+          case 'ul':    return `<ul class="li">${b.x.map(i => `<li>${i}</li>`).join('')}</ul>`;
+          case 'steps': return `<ol class="steps" style="--st:${(b.start || 1) - 1}">${b.x.map(i => `<li><div><b>${i.h}</b>${i.p ? `<span>${i.p}</span>` : ''}</div></li>`).join('')}</ol>`;
+          case 'img':   return noteImg(b.x, 'var(--is)', String(imgN++).padStart(2, '0'));
+          case 'card':  return `<div class="card">
+              ${b.k ? `<span class="k">${b.k}</span>` : ''}
+              ${b.h ? `<h3>${b.h}</h3>` : ''}
+              ${b.stat ? `<div class="stat"><b>${b.stat}</b><span>${b.statx || ''}</span></div>` : ''}
+              ${b.chip ? `<span class="chip${b.alt ? ' alt' : ''}">${b.chip}</span>` : ''}
+              ${b.p ? `<p>${b.p}</p>` : ''}
+              ${b.ul ? `<ul class="li">${b.ul.map(i => `<li>${i}</li>`).join('')}</ul>` : ''}
+              ${(b.secs || []).map(s => `<div class="sec"><span class="k">${s.k}</span><p>${s.x}</p></div>`).join('')}
+            </div>`;
+          default: return '';
+        }
+      };
+      project.sections.forEach(sec => {
+        const cols = sec.cols.map((blocks, c) => `
+          <div class="col${blocks.length === 1 && blocks[0].t === 'img' ? ' img' : ''} reveal" style="--d:${0.08 * (c + 1)}s">${blocks.map(blockHtml).join('')}</div>`).join('');
+        panels.push(`
+      <section class="panel p-sec">
+        <div class="sec-head reveal"><span class="n">${sec.num}</span><h2>${sec.title}</h2></div>
+        ${cols}
+      </section>`);
+      });
+    }
+
+    return panels;
+    }
+
+    /* Contacto: texto + formulario (al final de toda la página) */
+    const contactHTML = (isLast) => `
+      <section class="panel p-contact"${isLast ? ' id="contacto"' : ''}>
+        <div class="ct-head reveal">
+          <span class="label">Hablemos</span>
+          <h2>Conectemos</h2>
+          <p>Contame tus ideas y creemos tu propia obra.</p>
+        </div>
+        <form class="ct-form reveal" style="--d:.15s" novalidate>${contactFormHTML()}</form>
+      </section>`;
+
+    /* Todos los proyectos, uno detrás de otro, en un único recorrido */
+    const heroLayer = document.getElementById('hero-layer');
+    const idxNav = document.getElementById('idx');
+    const html = [];
+    PROJECTS.forEach((proj, pi) => {
+      const ps = buildPanels(proj);
+      ps[0] = ps[0].replace('<section class="panel p-hero"', `<section class="panel p-hero" id="p${proj.id}" data-seg`);
+      html.push(...ps);
+      html.push(contactHTML(pi === PROJECTS.length - 1));   // contacto al final de cada proyecto
+      if (pi < PROJECTS.length - 1) html.push('<section class="panel p-bridge" aria-hidden="true"></section>');
+
+      const hc = document.createElement('div');
+      hc.className = 'hero-circle';
+      hc.innerHTML = `<div class="disc" data-label="Imagen principal">${proj.images[0] ? `<img src="${proj.images[0]}" alt="">` : ''}</div>`;
+      heroLayer.appendChild(hc);
+
+      const a = document.createElement('a');
+      a.href = `#p${proj.id}`;
+      a.innerHTML = `${proj.number}<span>${proj.name}</span>`;
+      a.setAttribute('aria-label', `Proyecto ${proj.number}: ${proj.name}`);
+      a.dataset.name = proj.name;
+      idxNav.appendChild(a);
+    });
+    track.innerHTML = html.join('');
+    const heroCircles = [...heroLayer.children];
+    const heroPanels = [...track.querySelectorAll('.p-hero')];
+    const idxLinks = [...idxNav.children];
+
+    // Formulario: envío real por mail (ver CONTACT_EMAIL y enviarContacto en proyectos.js)
+    document.querySelectorAll('.ct-form').forEach(f => f.addEventListener('submit', (e) => { e.preventDefault(); enviarContacto(e.target); }));
+
+    // Prototipo: el iframe captura la rueda, así que se activa con un clic y se libera al salir
+    const protoFrame = document.getElementById('proto-frame');
+    if (protoFrame) {
+      protoFrame.querySelector('.shield').addEventListener('click', () => protoFrame.classList.add('active'));
+      protoFrame.addEventListener('mouseleave', () => protoFrame.classList.remove('active'));
+    }
+
+    // Prototipo de Mesa (mismo comportamiento: clic para interactuar, se libera al salir)
+    track.querySelectorAll('[data-proto]').forEach(fr => {
+      fr.querySelector('.shield').addEventListener('click', () => fr.classList.add('active'));
+      fr.addEventListener('mouseleave', () => fr.classList.remove('active'));
+    });
+
+    // Mesa · personas: en táctil, tocar el recuadro blanco abre/cierra el perfil completo
+    track.querySelectorAll('.mz-persona .pc').forEach(pc => {
+      pc.addEventListener('click', () => { if (matchMedia('(hover: none)').matches) pc.classList.toggle('open'); });
+    });
+
+    // Mesa · benchmark: con mouse se expande con hover (CSS); en táctil, con un toque
+    track.querySelectorAll('.mz-bench .bc').forEach(b => {
+      b.addEventListener('click', (e) => {
+        if (!matchMedia('(hover: none)').matches || e.target.closest('.mz-scroll')) return;
+        b.setAttribute('aria-expanded', b.getAttribute('aria-expanded') !== 'true');
+      });
+    });
+
+    // Mesa · requisitos: stack de recuadros que cambia con el mouse, el clic o el teclado
+    (function () {
+      const st = document.getElementById('req-stack');
+      if (!st) return;
+      const cards = [...st.querySelectorAll('.rq')];
+      let cur = -1;
+      const set = i => { i = (i + cards.length) % cards.length; if (i === cur) return; cur = i; cards.forEach((c, k) => c.classList.toggle('on', k === i)); };
+      set(0);                                                   // queda siempre en el 1…
+      cards.forEach(c => c.addEventListener('mouseenter', () => set(+c.dataset.i)));   // …hasta pasar directamente por encima de otro
+      st.addEventListener('mouseleave', () => set(0));          // al salir, vuelve al 1
+      st.addEventListener('click', e => { const c = e.target.closest('.rq'); if (c) set(+c.dataset.i); });
+      cards.forEach(c => c.addEventListener('focus', () => set(+c.dataset.i)));
+    })();
+
+    // BeBeMi · poses y concepto: con mouse se revelan con el hover (CSS); en táctil, con un toque
+    track.querySelectorAll('.bb-pose, .bb-rv, .dm-tile, .bb-node, .dm-bubbles i').forEach(el => {
+      el.addEventListener('click', () => { if (matchMedia('(hover: none)').matches) el.classList.toggle('open'); });
+    });
+
+    // BeBeMi · storyboard: una imagen que recorre los 4 cuadros sola; al elegir una escena se queda ahí
+    track.querySelectorAll('[data-bbsb]').forEach(box => {
+      const imgs = [...box.querySelectorAll('.bb-sb-img img')], btns = [...box.querySelectorAll('.bb-sb-nav button')], txts = [...box.querySelectorAll('.bb-sb-txt > div')], lays = [...box.querySelectorAll('.bb-sb-lay img')];
+      let cur = 0, timer = null, seen = false, hover = false;
+      const set = i => {
+        cur = (i + imgs.length) % imgs.length;
+        imgs.forEach((m, k) => m.classList.toggle('on', k === cur));
+        lays.forEach((m, k) => m.classList.toggle('on', k === cur));
+        txts.forEach((t, k) => t.classList.toggle('on', k === cur));
+        btns.forEach((b, k) => { b.classList.toggle('on', k === cur); b.setAttribute('aria-selected', String(k === cur)); });
+      };
+      const stop = () => { if (timer) { clearInterval(timer); timer = null; } };
+      btns.forEach((b, k) => {
+        b.addEventListener('click', () => { stop(); set(k); });
+        b.addEventListener('mouseenter', () => { if (matchMedia('(hover: hover)').matches) { stop(); set(k); } });   // con mouse, cambia con solo pasar por encima
+      });
+      box.addEventListener('pointerenter', () => { hover = true; });
+      box.addEventListener('pointerleave', () => { hover = false; });
+      if (!matchMedia('(prefers-reduced-motion: reduce)').matches) {
+        timer = setInterval(() => { if (seen && !hover && !document.hidden) set(cur + 1); }, 3800);
+        new IntersectionObserver(es => es.forEach(e => { seen = e.isIntersecting; }), { root: scroller, threshold: .4 }).observe(box);
+      }
+    });
+
+    // DUAL · guión: en la página solo se ve la portada (preview). Con un clic se agranda y recién ahí se pasan las páginas
+    // (flechas, teclado o clic en la hoja), con el giro 3D de las hojas.
+    track.querySelectorAll('.du-cover').forEach(cv => {
+      const pages = cv.dataset.book.split(',').map(f => 'assets/' + f);
+      const lb = document.createElement('div'); lb.className = 'bk-lb'; lb.setAttribute('role', 'dialog'); lb.setAttribute('aria-modal', 'true'); lb.setAttribute('aria-label', 'Guión literario de DUAL');
+      lb.innerHTML = '<button class="bk-x" type="button" aria-label="Cerrar el libro"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><path d="M2 2l12 12M14 2L2 14"/></svg></button><div class="du-bk" data-open="0"><div class="bk3"></div></div><div class="bk-ctrl"><button type="button" class="pv" aria-label="Página anterior">←</button><span class="ct">Portada</span><button type="button" class="nx" aria-label="Página siguiente">→</button></div>';
+      document.body.appendChild(lb);
+      const bk = lb.querySelector('.du-bk'), stage = lb.querySelector('.bk3'), pv = lb.querySelector('.pv'), nx = lb.querySelector('.nx'), ct = lb.querySelector('.ct');
+      const leaves = [];
+      for (let k = 0; k * 2 < pages.length; k++) {
+        const lf = document.createElement('div'); lf.className = 'leaf';
+        lf.innerHTML = `<div class="face front"><img src="${pages[k * 2]}" alt="Página ${k * 2 + 1} del guión" width="1250" height="1760"></div>` + (pages[k * 2 + 1] ? `<div class="face back"><img src="${pages[k * 2 + 1]}" alt="Página ${k * 2 + 2} del guión" width="1250" height="1760"></div>` : '');
+        stage.appendChild(lf); leaves.push(lf);
+      }
+      let n = 0;                                          // hojas dadas vuelta
+      const render = () => {
+        leaves.forEach((l, i) => { l.classList.toggle('flipped', i < n); l.style.zIndex = i < n ? i + 1 : leaves.length - i; });
+        bk.dataset.open = n === 0 ? '0' : (n === leaves.length ? '3' : '1');
+        pv.disabled = n === 0; nx.disabled = n === leaves.length;
+        ct.textContent = n === 0 ? 'Portada' : (n === leaves.length ? `Página ${pages.length}` : `Páginas ${n * 2}–${n * 2 + 1}`);
+      };
+      const go = d => { n = Math.min(leaves.length, Math.max(0, n + d)); render(); };
+      leaves.forEach((l, i) => l.addEventListener('click', () => go(i < n ? -1 : 1)));
+      pv.addEventListener('click', () => go(-1)); nx.addEventListener('click', () => go(1));
+      const open = () => { n = 0; render(); lb.classList.add('open'); document.body.style.overflow = 'hidden'; nx.focus(); };
+      const close = () => { lb.classList.remove('open'); document.body.style.overflow = ''; cv.focus(); };
+      cv.addEventListener('click', open);
+      lb.querySelector('.bk-x').addEventListener('click', close);
+      lb.addEventListener('click', e => { if (e.target === lb) close(); });
+      window.addEventListener('keydown', e => { if (!lb.classList.contains('open')) return; if (e.key === 'Escape') close(); if (e.key === 'ArrowRight') go(1); if (e.key === 'ArrowLeft') go(-1); });
+      render();
+    });
+
+    // Galería de DUAL: clic (o Enter) en una foto la agranda a pantalla completa
+    track.querySelectorAll('.lb-img').forEach(f => {
+      const open = () => {
+        let lb = document.getElementById('zoom-lb');
+        if (!lb) {
+          lb = document.createElement('div'); lb.id = 'zoom-lb'; lb.className = 'zoom-lb'; lb.setAttribute('role', 'dialog'); lb.setAttribute('aria-modal', 'true'); lb.setAttribute('aria-label', 'Imagen a pantalla completa');
+          lb.innerHTML = '<button class="x" type="button" aria-label="Cerrar"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><path d="M2 2l12 12M14 2L2 14"/></svg></button><img alt="" width="2000" height="1500">';
+          document.body.appendChild(lb);
+          const close = () => { lb.classList.remove('open'); document.body.style.overflow = ''; };
+          lb.addEventListener('click', close); window.addEventListener('keydown', e => { if (e.key === 'Escape') close(); });
+        }
+        const big = lb.querySelector('img'); big.src = f.dataset.full; big.alt = f.querySelector('img').alt;
+        lb.classList.add('open'); lb.scrollTop = 0; document.body.style.overflow = 'hidden';
+      };
+      f.addEventListener('click', open);
+      f.addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); open(); } });
+    });
+
+    // Lupa circular + pantalla completa (UI Kit de PetStar)
+    track.querySelectorAll('.zoomable').forEach(z => {
+      const im = z.querySelector('img'), lens = z.querySelector('.lens'), ZM = 2.44, R = 95;
+      lens.style.backgroundImage = `url("${z.dataset.full}")`;
+      z.addEventListener('pointermove', (e) => {
+        if (e.pointerType !== 'mouse') return;
+        const r = im.getBoundingClientRect(), x = e.clientX - r.left, y = e.clientY - r.top;
+        z.classList.add('on');
+        lens.style.left = (x - R) + 'px'; lens.style.top = (y - R) + 'px';
+        lens.style.backgroundSize = `${r.width * ZM}px ${r.height * ZM}px`;
+        lens.style.backgroundPosition = `${R - x * ZM}px ${R - y * ZM}px`;
+      });
+      z.addEventListener('pointerleave', () => z.classList.remove('on'));
+      const open = () => {
+        let lb = document.getElementById('zoom-lb');
+        if (!lb) {
+          lb = document.createElement('div'); lb.id = 'zoom-lb'; lb.className = 'zoom-lb'; lb.setAttribute('role', 'dialog'); lb.setAttribute('aria-modal', 'true'); lb.setAttribute('aria-label', 'Imagen a pantalla completa');
+          lb.innerHTML = '<button class="x" type="button" aria-label="Cerrar"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><path d="M2 2l12 12M14 2L2 14"/></svg></button><img alt="" width="2028" height="1793">';
+          document.body.appendChild(lb);
+          const close = () => { lb.classList.remove('open'); document.body.style.overflow = ''; };
+          lb.addEventListener('click', close); window.addEventListener('keydown', e => { if (e.key === 'Escape') close(); });
+        }
+        const big = lb.querySelector('img'); big.src = z.dataset.full; big.alt = im.alt;
+        lb.classList.add('open'); lb.scrollTop = 0; document.body.style.overflow = 'hidden';
+      };
+      z.addEventListener('click', open);
+      z.addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); open(); } });
+    });
+
+    // En pantallas táctiles (sin hover) tocar una etapa despliega su texto
+    track.querySelectorAll('.step').forEach(st => {
+      st.addEventListener('click', () => st.classList.toggle('open'));
+    });
+
+    /* ==========================================================================
+       FORMA ROJA: p = 0 → banda con medio círculo sobre fondo blanco
+                   p = 1 → todo rojo
+       ========================================================================== */
+    const lerp = (a, b, t) => a + (b - a) * t;
+    const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
+
+    /* orient 'left'  → inicio: parte redondeada a la izquierda (banda pegada al borde derecho)
+       orient 'right' → final: parte redondeada a la derecha (banda pegada al borde izquierdo) */
+    function applyShape(p, orient) {
+      const vw = window.innerWidth, vh = window.innerHeight;
+      const e = 1 - Math.pow(1 - p, 3);                  // arranca rápido, llega suave
+      const portrait = vw < vh;
+      const wL = vw * (portrait ? 0.94 : 0.9);
+      const h0 = vh * 0.76;
+      const r0 = Math.min(h0 / 2, wL * 0.45);
+      const w0 = orient === 'right' ? vw / 2 + r0 : wL;   // al final la curva queda concéntrica con el círculo centrado
+      const w = lerp(w0, vw, e);
+      const r = lerp(r0, 0, e);
+      shape.style.top = `${lerp(vh * 0.12, 0, e)}px`;
+      shape.style.height = `${lerp(h0, vh, e)}px`;
+      shape.style.width = `${w}px`;
+      if (orient === 'right') {
+        shape.style.left = '0px';
+        shape.style.borderRadius = `0 ${r}px ${r}px 0`;
+      } else {
+        shape.style.left = `${vw - w}px`;
+        shape.style.borderRadius = `${r}px 0 0 ${r}px`;
+      }
+      document.body.classList.toggle('on-red', e > 0.55 || !document.documentElement.classList.contains('ready'));
+    }
+
+    /* ==========================================================================
+       SCROLL: la rueda vertical se convierte en desplazamiento horizontal suave
+       ========================================================================== */
+    const maxScroll = () => scroller.scrollWidth - scroller.clientWidth;
+    const reduced = matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+    let target = 0;      // posición a la que queremos llegar
+    let current = 0;     // posición suavizada actual
+    let animating = false;
+
+    function loop() {
+      current += (target - current) * (reduced ? 1 : 0.12);
+      if (Math.abs(target - current) < 0.5) current = target;
+      scroller.scrollLeft = current;
+      if (current !== target) requestAnimationFrame(loop);
+      else animating = false;
+    }
+    function scrollToX(x) {
+      target = clamp(x, 0, maxScroll());
+      if (!animating) { animating = true; requestAnimationFrame(loop); }
+    }
+
+    scroller.addEventListener('wheel', (e) => {
+      if (Math.abs(e.deltaX) > Math.abs(e.deltaY)) return;   // gesto horizontal: nativo
+      const sc = e.target.closest && e.target.closest('.mz-scroll');   // lista interna con scroll propio
+      if (sc && sc.scrollHeight > sc.clientHeight + 2 && ((e.deltaY > 0 && sc.scrollTop + sc.clientHeight < sc.scrollHeight - 1) || (e.deltaY < 0 && sc.scrollTop > 0))) return;
+      e.preventDefault();
+      const dy = e.deltaMode === 1 ? e.deltaY * 32 : e.deltaY;
+      scrollToX(target + dy * 1.4);
+    }, { passive: false });
+
+    // Teclado
+    window.addEventListener('keydown', (e) => {
+      if (e.target.closest && e.target.closest('input, textarea, select, button, a')) return;
+      const step = window.innerWidth * 0.7;
+      const keys = {
+        ArrowRight: step, ArrowDown: step, PageDown: step, ' ': step,
+        ArrowLeft: -step, ArrowUp: -step, PageUp: -step
+      };
+      if (e.key in keys) { e.preventDefault(); scrollToX(target + keys[e.key]); }
+      if (e.key === 'Home') { e.preventDefault(); scrollToX(0); }
+      if (e.key === 'End')  { e.preventDefault(); scrollToX(maxScroll()); }
+    });
+
+    /* Sincroniza con scroll nativo (táctil / trackpad), extiende la forma roja y
+       mueve el círculo principal: sale hacia la izquierda un poco más rápido que
+       el contenido y desaparece. */
+    /* Posición de cada proyecto (ancla) y del contacto, en px dentro del recorrido */
+    let segX = [], contactX = 0, activeSeg = -1, userMoved = false;
+    function measure() {
+      const base = scroller.getBoundingClientRect().left - scroller.scrollLeft;
+      const pos = el => el.getBoundingClientRect().left - base;
+      segX = [...track.querySelectorAll('[data-seg]')].map(pos);
+      contactX = pos(document.getElementById('contacto'));
+    }
+    const segAt = (x) => { let i = 0; segX.forEach((v, k) => { if (x >= v - 1) i = k; }); return i; };
+    function jumpTo(x) { current = target = x; scroller.scrollLeft = x; }
+
+    const BRIDGE = 1.15;  // ancho del tramo entre proyectos, en pantallas (igual que .p-bridge)
+    function geom() {
+      const vw = window.innerWidth, vh = window.innerHeight;
+      const wL = vw * (vw < vh ? 0.94 : 0.9), h0 = vh * 0.76;
+      const r0 = Math.min(h0 / 2, wL * 0.45);
+      return { wL, h0, r0, w0: vw / 2 + r0, top: vh * 0.12 };
+    }
+
+    /* Centrado: el bloque de contenido de cada panel (de su elemento más alto al más bajo) queda centrado en la pantalla.
+       Se mide con offsetTop (sin transformaciones), así no lo afectan las animaciones de aparición. */
+    const CENTER_SEL = '.af-pres, .af-id, .af-mock, .af-case, .af-specp, .mz-info, .mz-protosec, .dm-art, .p-contact, .mz-personas, .mz-benchs';
+    function centerBlocks() {
+      document.querySelectorAll('#track .panel').forEach(p => {
+        if (!p.matches(CENTER_SEL)) return;
+        p.style.top = '0px';
+        const kids = [...p.children].filter(c => c.offsetWidth && getComputedStyle(c).position !== 'absolute');
+        if (!kids.length) return;
+        const top = Math.min(...kids.map(c => c.offsetTop)), bot = Math.max(...kids.map(c => c.offsetTop + c.offsetHeight));
+        const pr = p.getBoundingClientRect();
+        let dy = window.innerHeight / 2 - (pr.top + (top + bot) / 2);
+        if (p.matches('.mz-benchs')) dy -= 0.2 * (pr.top + top + dy);   // 20% más arriba (respecto a su posición centrada)
+        p.style.top = `${Math.round(dy)}px`;
+      });
+    }
+    /* Re-sincroniza las posiciones de cada proyecto: si el ancho de un panel cambia después de cargar (tipografías web,
+       imágenes), el scroll se mantiene anclado al proyecto en el que estás y el círculo principal queda siempre pegado a su título */
+    let navSeg = null;   // proyecto al que viaja el índice: si durante el viaje cambian los anchos, se corrige el destino
+    function resync() {
+      if (animating) { measure(); if (navSeg !== null) target = clamp(segX[navSeg], 0, maxScroll()); return; }
+      const x = scroller.scrollLeft, i = Math.max(0, segAt(x)), off = x - (segX[i] || 0), wasContact = activeSeg === -2;
+      const before = segX.join(',') + '|' + contactX;
+      measure();
+      if (segX.join(',') + '|' + contactX === before) return;
+      if (!userMoved) jumpTo(location.hash === '#contacto' ? contactX : segX[Math.max(0, activeSeg < 0 ? startIdx : activeSeg)]);
+      else jumpTo(wasContact ? contactX + off : segX[i] + off);
+      onScroll();
+    }
+    /* Si algo cambia de tamaño después (tipografías web, imágenes que terminan de cargar), el centrado se recalcula solo */
+    (function () {
+      let raf = 0;
+      const again = () => { cancelAnimationFrame(raf); raf = requestAnimationFrame(() => { if (typeof resync === 'function') resync(); centerBlocks(); }); };
+      if (window.ResizeObserver) { const ro = new ResizeObserver(again); ro.observe(track); document.querySelectorAll('#track .panel').forEach(p => { ro.observe(p); [...p.children].forEach(c => ro.observe(c)); }); }
+      if (document.fonts) { document.fonts.addEventListener && document.fonts.addEventListener('loadingdone', again); document.fonts.ready.then(again); }
+      window.addEventListener('load', again);
+      [300, 1000, 2500].forEach(ms => setTimeout(again, ms));
+    })();
+    let ticking = false;
+    function updateFromScroll() {
+      const x = scroller.scrollLeft, vw = window.innerWidth, half = vw * 0.5;
+      const i = segAt(x), last = i === segX.length - 1;
+      const nextX = last ? contactX : segX[i + 1];
+
+      // Círculo principal de cada proyecto: sale hacia la izquierda un poco más rápido que el contenido
+      heroCircles.forEach((hc, k) => {
+        // La posición sale del panel REAL del título (no de medidas guardadas): así el círculo y su título nunca se desfasan,
+        // aunque el ancho de otros paneles cambie después de cargar.
+        const hp = heroPanels[k], left = hp ? hp.getBoundingClientRect().left : -(x - segX[k]);
+        const t = left * 1.15;
+        hc.style.transform = `translate3d(${t}px, 0, 0)`;
+        hc.style.visibility = (t < vw + 40 && t > -vw - 120) ? 'visible' : 'hidden';
+      });
+
+      /* Forma roja.
+         · Entrada de un proyecto: banda con medio círculo a la izquierda que se expande hasta cubrir todo.
+         · Salida (tramo vacío entre proyectos, 1.3 pantallas): el rojo se retira y deja el FINAL de un
+           proyecto (banda con medio círculo a la derecha); entonces entra desde la derecha el PRINCIPIO del
+           siguiente (medio círculo a la izquierda). Por un momento se ven los dos semicírculos enfrentados. */
+      const g = geom();
+      const bridgeW = BRIDGE * vw;
+      const bridgeStart = last ? Infinity : nextX - bridgeW;
+      let p;
+      if (x >= bridgeStart) {
+        const u = x - bridgeStart;
+        p = clamp(1 - u / half, 0, 1);                       // el rojo se retira hasta formar el final
+        applyShape(p, 'right');
+        const bFinal = vw - g.wL;                           // posición del principio del proyecto siguiente
+        const bLeft = bFinal + 1.15 * (bridgeW - u);        // llega a la misma velocidad que su círculo
+        const gap = vw * 0.06;
+        const u0 = bridgeW - (g.w0 + gap - bFinal) / 1.15;  // desde acá viajan juntos hacia la izquierda
+        const tt = clamp((u - u0) / (bridgeW - u0), 0, 1);
+        const shift = 1.15 * Math.max(0, u - u0) + vw * 0.1 * tt * tt;
+        if (u > u0) shape.style.left = `${-shift}px`;
+        shapeB.style.display = bLeft < vw ? 'block' : 'none';
+        shapeB.style.top = `${g.top}px`;
+        shapeB.style.height = `${g.h0}px`;
+        shapeB.style.width = `${g.wL}px`;
+        shapeB.style.left = `${bLeft}px`;
+        shapeB.style.borderRadius = `${g.r0}px 0 0 ${g.r0}px`;
+      } else {
+        shapeB.style.display = 'none';
+        p = clamp((x - segX[i]) / half, 0, 1);              // entrada del proyecto
+        applyShape(p, 'left');
+      }
+      document.body.classList.toggle('show-progress', p > 0.35);
+
+      // Progreso dentro del proyecto actual
+      const span = Math.max(1, nextX - segX[i]);
+      const frac = clamp((x - segX[i]) / span, 0, 1);
+      progressBar.style.transform = `scaleX(${frac})`;
+      progressEl.style.setProperty('--pos', `${frac * 100}%`);
+
+      // Índice: proyecto actual (y título / ancla de la barra de direcciones)
+      const inContact = x >= contactX - half;
+      const seg = inContact ? -2 : i;
+      if (seg !== activeSeg) {
+        activeSeg = seg;
+        idxLinks.forEach((a, k) => a.classList.toggle('on', k === seg));
+        if (seg >= 0) idxNav.scrollTo({ left: idxLinks[seg].offsetLeft - idxNav.clientWidth / 2 + idxLinks[seg].offsetWidth / 2, behavior: 'smooth' });
+        const pr = PROJECTS[i];
+        document.title = inContact ? 'Contacto — Melaza Studio' : `${pr.name} — Melaza Studio`;
+        history.replaceState(null, '', location.pathname + (inContact ? '#contacto' : `#p${pr.id}`));
+      }
+      if (x > 40) hintEl.classList.add('gone');
+    }
+    function onScroll() {
+      if (!animating) { current = target = scroller.scrollLeft; }
+      if (ticking) return;
+      ticking = true;
+      requestAnimationFrame(() => { updateFromScroll(); ticking = false; });
+    }
+    scroller.addEventListener('scroll', onScroll, { passive: true });
+    window.addEventListener('resize', () => { centerBlocks(); const k = Math.max(0, activeSeg); measure(); jumpTo(activeSeg === -2 ? contactX : segX[k]); onScroll(); });
+    ['wheel', 'touchstart', 'keydown', 'pointerdown'].forEach(ev => scroller.addEventListener(ev, () => { userMoved = true; navSeg = null; }, { passive: true }));
+
+    // Anclas: el índice y "Contacto" llevan suavemente al proyecto / formulario
+    idxLinks.forEach((a, k) => a.addEventListener('click', (e) => {
+      e.preventDefault(); navSeg = k; scrollToX(segX[k]);
+      const t = setInterval(() => {          // al llegar, se verifica que el destino siga siendo exacto
+        if (navSeg !== k) { clearInterval(t); return; }
+        if (animating) return;
+        clearInterval(t); measure();
+        if (Math.abs(scroller.scrollLeft - segX[k]) > 1) { jumpTo(segX[k]); onScroll(); }
+        navSeg = null;
+      }, 250);
+    }));
+    // Botón "Ver proyecto": lleva directo al prototipo
+    document.querySelectorAll('[data-goto]').forEach(a => a.addEventListener('click', (e) => {
+      e.preventDefault();
+      const el = document.getElementById(a.dataset.goto);
+      if (el) scrollToX(el.getBoundingClientRect().left - (scroller.getBoundingClientRect().left - scroller.scrollLeft));
+    }));
+    /* Barra de progreso: clic o arrastre para moverse dentro del proyecto actual
+       (el recorrido de la barra va desde el inicio del proyecto hasta el inicio del siguiente) */
+    (function () {
+      let dragging = false, seg = 0;
+      const xAt = (e) => {
+        const r = progressEl.getBoundingClientRect();
+        const f = clamp((e.clientX - r.left) / r.width, 0, 1);
+        const next = seg === segX.length - 1 ? contactX : segX[seg + 1];
+        return segX[seg] + f * (next - segX[seg]);
+      };
+      progressEl.addEventListener('pointerdown', (e) => {
+        dragging = true; userMoved = true;
+        seg = segAt(scroller.scrollLeft);           // proyecto en el que estás al empezar
+        progressEl.setPointerCapture(e.pointerId);
+        progressEl.classList.add('drag');
+        scrollToX(xAt(e));                           // clic: viaja suave hasta ahí
+      });
+      progressEl.addEventListener('pointermove', (e) => {
+        if (!dragging) return;
+        const x = clamp(xAt(e), 0, maxScroll());
+        target = x; if (!animating) jumpTo(x);       // arrastre: sigue al puntero
+      });
+      const end = () => { dragging = false; progressEl.classList.remove('drag'); };
+      progressEl.addEventListener('pointerup', end);
+      progressEl.addEventListener('pointercancel', end);
+    })();
+
+    /* Entrada: llega todo rojo (como termina la expansión del home) y la forma se
+       encoge hasta quedar como banda roja con medio círculo sobre fondo blanco. */
+    centerBlocks();
+    measure();
+    jumpTo(location.hash === '#contacto' ? contactX : segX[startIdx]);
+    // Si cargan las tipografías cambian los anchos: se vuelve a medir mientras el usuario no se movió
+    const remeasure = () => { centerBlocks(); resync(); };
+    if (document.fonts && document.fonts.ready) document.fonts.ready.then(remeasure);
+    window.addEventListener('load', remeasure);
+    applyShape(1, 'left');
+    requestAnimationFrame(() => requestAnimationFrame(() => {
+      document.documentElement.classList.add('ready');
+      shape.classList.add('settling');
+      updateFromScroll();
+      setTimeout(() => shape.classList.remove('settling'), 1300);
+    }));
+    scroller.focus({ preventScroll: true });
+
+    /* ==========================================================================
+       APARICIÓN AL ENTRAR EN PANTALLA
+       ========================================================================== */
+    const io = new IntersectionObserver((entries) => {
+      entries.forEach(en => {
+        if (!en.isIntersecting) return;
+        en.target.classList.add('in');
+        io.unobserve(en.target);
+      });
+    }, { root: scroller, threshold: 0.25 });
+    document.querySelectorAll('.reveal').forEach(el => io.observe(el));
+
+    /* ==========================================================================
+       CRUZ: vuelve a la Home con un fundido
+       ========================================================================== */
+    document.getElementById('close').addEventListener('click', (e) => {
+      e.preventDefault();
+      document.body.classList.add('is-leaving');
+      setTimeout(() => { location.href = 'index.html'; }, 350);
+    });
+
+    // Al volver con "atrás" no debe quedar la página transparente
+    window.addEventListener('pageshow', () => document.body.classList.remove('is-leaving'));
+  </script>
+</body>
+</html>
